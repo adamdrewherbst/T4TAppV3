@@ -1,0 +1,178 @@
+material grid
+{
+    technique
+    {
+        pass 0
+        {
+            // shaders
+            vertexShader = res/shaders/colored-unlit.vert
+            fragmentShader = res/shaders/colored-unlit.frag
+			defines = VERTEX_COLOR
+
+             // uniforms
+            u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX
+
+            // render state
+            renderState
+            {
+                cullFace = true
+                depthTest = true
+            }
+        }
+    }
+}
+
+material colored
+{
+    technique
+    {
+        pass
+        {
+            vertexShader = res/shaders/colored.vert
+            fragmentShader = res/shaders/colored.frag
+            defines = DIRECTIONAL_LIGHT_COUNT 1
+
+			u_diffuseColor = 1.0, 1.0, 1.0, 1.0
+			u_ambientColor = 0.5, 0.5, 0.5
+            u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX
+            u_inverseTransposeWorldViewMatrix = INVERSE_TRANSPOSE_WORLD_VIEW_MATRIX
+            
+            renderState
+            {
+                cullFace = true
+                depthTest = true
+            }
+        }
+    }
+}
+
+material hull_outer : colored {
+	technique {
+		pass {
+			u_ambientColor = 1.0, 0.0, 1.0
+		}
+	}
+}
+
+material hull_inner : colored {
+	technique {
+		pass {
+			u_ambientColor = 1.0, 1.0, 0.0
+		}
+	}
+}
+
+material textured
+{
+	u_textureRepeat = 1, 1
+	
+	technique unlit
+    {
+        pass 0
+        {
+            // shaders
+            vertexShader = res/shaders/textured.vert
+            fragmentShader = res/shaders/textured.frag
+			defines = TEXTURE_REPEAT
+            
+            // uniforms
+			u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX
+ 
+            // samplers
+            sampler u_diffuseTexture
+            {
+            	path = res/png/dummy_texture.png
+                mipmap = true
+                wrapS = REPEAT
+                wrapT = REPEAT
+                minFilter = NEAREST_MIPMAP_LINEAR
+                magFilter = LINEAR
+            }
+
+            // render state
+            renderState
+            {
+                cullFace = true
+                depthTest = true
+            }
+        }
+    }
+}
+
+material workbench
+{
+	u_textureRepeat = 1, 1
+	
+	technique unlit
+    {
+        pass 0
+        {
+            // shaders
+            vertexShader = res/shaders/textured.vert
+            fragmentShader = res/shaders/textured.frag
+			defines = TEXTURE_REPEAT
+            
+            // uniforms
+			u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX
+ 
+            // samplers
+            sampler u_diffuseTexture
+            {
+            	path = res/png/workbench_texture.png
+                mipmap = true
+                wrapS = REPEAT
+                wrapT = REPEAT
+                minFilter = NEAREST_MIPMAP_LINEAR
+                magFilter = LINEAR
+            }
+
+            // render state
+            renderState
+            {
+                cullFace = true
+                depthTest = true
+            }
+        }
+    }
+}
+
+material finishLine
+{
+	u_textureRepeat = 1, 1
+	
+	technique unlit
+    {
+        pass 0
+        {
+            // shaders
+            vertexShader = res/shaders/textured.vert
+            fragmentShader = res/shaders/textured.frag
+			defines = TEXTURE_REPEAT
+            
+            // uniforms
+			u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX
+ 
+            // samplers
+            sampler u_diffuseTexture
+            {
+            	path = res/png/finishLine.png
+                mipmap = true
+                wrapS = REPEAT
+                wrapT = REPEAT
+                minFilter = NEAREST_MIPMAP_LINEAR
+                magFilter = LINEAR
+            }
+
+            // render state
+            renderState
+            {
+                cullFace = true
+                depthTest = true
+                blend = true
+                blendSrc = SRC_ALPHA
+                blendDst = ONE_MINUS_SRC_ALPHA
+            }
+        }
+    }
+}
+

@@ -1,0 +1,40 @@
+animation dummy_walk {
+	property = ANIMATE_TRANSLATE
+	keyCount = 1
+	keyTimes = 0
+	keyValues = 0.0 0.0 0.0
+	curve = LINEAR
+}
+
+animation robot_walk : dummy_walk {
+}
+
+animation robot_torso_walk : dummy_walk {
+}
+
+animation robot_head_walk : dummy_walk {
+}
+
+animation robot_limb_walk {
+	property = ANIMATE_ROTATE
+	keyCount = 4
+	keyTimes = 0, 200, 600, 800
+	curve = LINEAR
+}
+
+animation robot_arm1_walk : robot_limb_walk {
+	keyValues = 0.0 0.0 0.0 1.0 0.5 0.0 0.0 0.866 -0.5 0.0 0.0 0.866 0.0 0.0 0.0 1.0
+}
+
+animation robot_arm2_walk : robot_limb_walk {
+	keyValues = 0.0 0.0 0.0 1.0 -0.5 0.0 0.0 0.866 0.5 0.0 0.0 0.866 0.0 0.0 0.0 1.0
+}
+
+animation robot_leg1_walk : robot_limb_walk {
+	keyValues = 0.0 0.0 0.0 1.0 -0.5 0.0 0.0 0.866 0.5 0.0 0.0 0.866 0.0 0.0 0.0 1.0
+}
+
+animation robot_leg2_walk : robot_limb_walk {
+	keyValues = 0.0 0.0 0.0 1.0 0.5 0.0 0.0 0.866 -0.5 0.0 0.0 0.866 0.0 0.0 0.0 1.0
+}
+

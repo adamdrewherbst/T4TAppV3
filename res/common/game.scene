@@ -1,0 +1,11 @@
+scene {
+
+	path = res/common/scene.gpb
+	
+	activeCamera = cameraNode
+	
+	node lightNode {
+		url = lightNode
+	}
+}
+
