@@ -212,26 +212,7 @@ void T4TApp::initialize()
 	splash("Building model catalog...");
 
 	// populate catalog of items
-	_models = Scene::create("models");
-	addItem("box", 2, "general", "body");
-	addItem("sphere", 2, "general", "body");
-	addItem("cylinder", 2, "general", "body");
-	addItem("halfpipe", 3, "general", "body", "lever arm");
-	addItem("stripey_tube", 2, "general", "body");
-	addItem("gear_basic", 2, "general", "gear");
-	addItem("cap_with_hole_1", 1, "general");
-	addItem("pitri_wheel", 1, "general");
-	addItem("green_flange_wheel", 1, "general");
-	addItem("jar_with_cone", 1, "general");
-	addItem("disk_with_holes", 1, "general");
-	addItem("threaded_post", 1, "general");
-	addItem("nose_cone", 2, "general", "wheel");
-	addItem("peepee_cap", 1, "general");
-	addItem("plastic_cone", 1, "general");
-	addItem("foam_roof", 1, "general");
-	addItem("astronaut", 1, "general");
-	addItem("bread_cone", 1, "general");
-	//addItem("EnginePropellerThing", 1, "general");
+	loadModels();
 
 	_drawDebugCheckbox = (CheckBox*) _sideMenu->getControl("drawDebug");
 	//_drawDebugCheckbox = addControl <CheckBox> (_sideMenu, "drawDebug");
@@ -1008,21 +989,39 @@ void T4TApp::initScene()
 }
 
 void T4TApp::addItem(const char *type, short numTags, ...) {
+	va_list args;
+	va_start(args, numTags);
+	std::vector<std::string> tags;
+	for(short i = 0; i < numTags; i++) {
+		const char *tag = va_arg(args, const char*);
+		tags.push_back(tag);
+	}
+	va_end(args);
+	addItem(type, tags);
+}
+
+void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	if(_models->findNode(type) != NULL) return;
 	std::ostringstream os;
 	os << "Building model catalog... " << type;
 	splash(os.str().c_str());
-	va_list args;
-	va_start(args, numTags);
+
+	//first see if we need to convert the model source to a node file
+	std::string filebase = "res/models/", filename;
+	filebase += type;
+	filename = filebase + ".node";
+	if(!FileSystem::fileExists(filename.c_str())) {
+		if(!loadObj(type)) loadDAE(type);
+	}
+
+	//then load the node file
 	MyNode *node = MyNode::create(type);
 	node->_type = type;
 	node->loadData("res/models/", false);
 	node->setTranslation(Vector3(1000.0f,0.0f,0.0f));
-	for(short i = 0; i < numTags; i++) {
-		const char *tag = va_arg(args, const char*);
-		node->setTag(tag);
+	for(short i = 0; i < tags.size(); i++) {
+		node->setTag(tags[i].c_str());
 	}
-	va_end(args);
 	_models->addNode(node);
 	//ImageControl* itemImage = addControl <ImageControl> (_componentMenu, MyNode::concat(2, "comp_", type));
 	Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
@@ -1463,7 +1462,7 @@ MyNode* T4TApp::addModelNode(const char *type) {
 }
 
 Model* T4TApp::createModel(std::vector<float> &vertices, bool wireframe, const char *material, Node *node, bool doTexture) {
-	int numVertices = vertices.size()/6;
+	int numVertices = vertices.size() / (doTexture ? 8 : 6);
 	VertexFormat::Element elements[3];
 	elements[0] = VertexFormat::Element(VertexFormat::POSITION, 3);
 	elements[1] = VertexFormat::Element(wireframe ? VertexFormat::COLOR : VertexFormat::NORMAL, 3);

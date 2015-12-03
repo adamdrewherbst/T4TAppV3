@@ -31,6 +31,9 @@ public:
 	std::vector<Vector3> _cameraVertices, _cameraNormals;
 	//the outlines of the contiguous regions of my surface that face the camera
 	std::vector<std::vector<unsigned short> > _cameraPatches;
+	
+	//if this node has a different mesh for display purposes (ie. more detailed)
+	Meshy *_visualMesh;
 
 	//COLLADA component info, for making hulls en masse
 	//-for each component, stores the ID and the list of instances as vertex sets
@@ -126,7 +129,8 @@ public:
 
 	bool getTouchPoint(int x, int y, Vector3 *point, Vector3 *normal);
 	short pt2Face(Vector3 point, Vector3 viewer = Vector3::zero());
-	short pix2Face(int x, int y, Vector3 *point = NULL);
+	unsigned int pix2Face(int x, int y, Vector3 *point = NULL);
+	std::vector<unsigned int> rect2Faces(const Rectangle& rectangle, Vector3 *point = NULL);
 	Plane facePlane(unsigned short f, bool modelSpace = false);
 	Vector3 faceCenter(unsigned short f, bool modelSpace = false);
 	void setGroundRotation();

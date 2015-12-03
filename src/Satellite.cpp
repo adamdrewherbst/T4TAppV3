@@ -14,7 +14,7 @@ Satellite::Satellite() : Project::Project("satellite", "Satellite") {
 	_body = (Body*) addElement(new Body(this));
 	_instruments = (Instrument*) addElement(new Instrument(this, _body));
 	setupMenu();
-	
+
 	_testState->set(40, M_PI/4, M_PI/3);
 
 	_maxRadius = 10.0f;
@@ -29,6 +29,7 @@ bool Satellite::setSubMode(short mode) {
 			break;
 		} case 1: { //test
 			//check that it fits in the cylinder
+			_rootNode->updateTransform();
 			std::vector<MyNode*> nodes = _rootNode->getAllNodes();
 			short i, j, n = nodes.size(), nv;
 			float radius, maxRadius = 0, minZ = 1e6, maxZ = -1e6;

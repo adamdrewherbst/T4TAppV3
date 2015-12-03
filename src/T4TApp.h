@@ -286,16 +286,17 @@ public:
     char* curlFile(const char *url, const char *filename = NULL, const char *localVersion = NULL);
 	void generateModels();
 	MyNode* generateModel(const char *id, const char *type, ...);
-	void loadModels(const char *filename);
-	void loadObj(const char *filename);
+	void loadModels(); //const char *filename);
+	bool loadObj(const char *type);
 	#ifdef USE_COLLADA
 	void loadXMLNode(pugi::xml_document &doc, pugi::xml_node &xnode, Matrix world, MyNode *node, std::vector<Meshy*> &meshes);
-	void loadDAE(const char *filename);
+	bool loadDAE(const char *type);
 	#endif
-	void addItem(const char *type, short numTags = 0, ...);
+	void addItem(const char *type, std::vector<std::string> tags);
+	void addItem(const char *type, short numTags, ...);
 	void filterItemMenu(const char *tag = NULL);
 	void promptItem(const char *tag = NULL, const char *title = NULL);
-	
+
 	MyNode* loadNode(const char* id);
     MyNode* duplicateModelNode(const char* type, bool isStatic = false);
     MyNode* addModelNode(const char *type);

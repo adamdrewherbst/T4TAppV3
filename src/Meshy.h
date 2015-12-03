@@ -42,8 +42,8 @@ class Face {
 	void resize(unsigned short size);
 	void addHole(const std::vector<unsigned short> &hole);
 	unsigned short& operator[](unsigned short index);
-	unsigned short front();
-	unsigned short back();
+	unsigned short front() const;
+	unsigned short back() const;
 	void addEdge(unsigned short e1, unsigned short e2, bool boundary = false);
 	void updateEdges();
 	void setTransform();
@@ -51,8 +51,8 @@ class Face {
 	void reverse();
 	Plane getPlane(bool modelSpace = false);
 	Vector3 getNormal(bool modelSpace = false) const;
-	float getDistance(bool modelSpace = false);
-	Vector3 getCenter(bool modelSpace = false);
+	float getDistance(bool modelSpace = false) const;
+	Vector3 getCenter(bool modelSpace = false) const;
 
 	//triangulation of faces via GLU Tesselator
 	void triangulate();
@@ -115,6 +115,9 @@ public:
 	static Vector3 getNormal(std::vector<Vector3> &face);
 	virtual void copyMesh(Meshy *mesh);
 	virtual void clearMesh();
+	bool loadMesh(Stream *stream);
+	void writeMesh(Stream *stream, bool modelSpace);
+	void loadObj(const char *filename, Vector3 *shift = NULL);
 };
 
 }

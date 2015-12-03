@@ -9,12 +9,12 @@ HullMode::HullMode() : Mode::Mode("hull", "Hull") {
 	_doSelect = false;
 	_ctrlPressed = false;
 	_shiftPressed = false;
-	
+
 	_region = new Selection(this, "region", Vector3(0.0f, 0.0f, 1.0f));
 	_ring = new Selection(this, "ring", Vector3(0.0f, 1.0f, 0.0f));
 	_chain = new Selection(this, "chain", Vector3(1.0f, 0.0f, 0.0f));
 	_hullNode = NULL;
-	
+
 	_axisContainer = (Container*) _controls->getControl("axisContainer");
 	_scaleSlider = (Slider*) _controls->getControl("scale");
 	_scaleText = (TextBox*) _controls->getControl("scaleText");
@@ -24,6 +24,7 @@ HullMode::HullMode() : Mode::Mode("hull", "Hull") {
 	_subModes.push_back("selectRegion");
 	_subModes.push_back("selectRing");
 	_subModes.push_back("selectChain");
+	_subModes.push_back("selectRectangle");
 }
 
 void HullMode::setActive(bool active) {
@@ -58,6 +59,10 @@ bool HullMode::setSubMode(short mode) {
 			_region->clear();
 			_ring->clear();
 			break;
+		} case 3: { //select rectangle
+			_currentSelection = _region;
+			_ring->clear();
+			_chain->clear();
 		}
 	}
 	return changed;
@@ -66,7 +71,7 @@ bool HullMode::setSubMode(short mode) {
 void HullMode::controlEvent(Control *control, EventType evt) {
 	Mode::controlEvent(control, evt);
 	const char *id = control->getId();
-	
+
 	if(strcmp(id, "selectAll") == 0) {
 		_region->clear();
 		_ring->clear();
@@ -133,10 +138,16 @@ void HullMode::controlEvent(Control *control, EventType evt) {
 			n = hull->nv();
 			for(j = 0; j < n; j++) world.transformPoint(&hull->_vertices[j]);
 		}
+		Meshy *visual = _hullNode->_visualMesh;
+		if(visual) {
+			n = visual->nv();
+			for(j = 0; j < n; j++) world.transformPoint(&visual->_vertices[j]);
+		}
+		//_hullNode->writeData("res/models/", false);
 		_hullNode->setScale(1, 1, 1);
 		_scaleText->setText("");
-		//_hullNode->writeData("res/models/", false);
 		_hullNode->uploadData("http://www.t4t.org/nasa-app/models/scripts/save.php");
+		updateModel();
 	}
 }
 
@@ -306,12 +317,21 @@ bool HullMode::selectItem(const char *id) {
 	_scene->addNode(_hullNode);
 	updateTransform();
 	_hullNode->addPhysics();
+	//if the node currently has one hull, assume it is the default and remove it
+	if(_hullNode->nh() == 1) {
+		_hullNode->clearPhysics();
+	}
 	app->_componentMenu->setVisible(false);
 	return true;
 }
 
 void HullMode::updateModel() {
+	//use the physical mesh, not the visual mesh, when making hulls
+	Meshy *visual = _hullNode->_visualMesh;
+	_hullNode->_visualMesh = NULL;
 	_hullNode->updateModel(false, false);
+	_hullNode->_visualMesh = visual;
+
 	//add all the triangles again, but with opposite orientation, so the user can click on the backwards ones to reverse them
 	short nt = _hullNode->nt();
 	std::vector<short> forward(3 * nt), reverse(3 * nt);
@@ -357,16 +377,39 @@ bool HullMode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int cont
 	if(_currentSelection && isTouching()) {
 		if(evt == Touch::TOUCH_PRESS && !_ctrlPressed && !_shiftPressed) {
 			_currentSelection->clear();
-		}
-		short face = _hullNode->pix2Face(_x, _y);
-		if(face >= 0) {
-			cout << "selected face " << face << ":" << endl;
-			_hullNode->printFace(face, false);
-			if(_shiftPressed) {
-				_currentSelection->toggleFace(face);
-			} else {
-				_currentSelection->addFace(face);
+		} else {
+			short face = _hullNode->pix2Face(_x, _y);
+			if(face >= 0) {
+				//cout << "selected face " << face << ":" << endl;
+				//_hullNode->printFace(face, false);
+				if(_shiftPressed) {
+					_currentSelection->toggleFace(face);
+				} else {
+					_currentSelection->addFace(face);
+				}
 			}
+		}
+	}
+	if(_subMode == 3 && _currentSelection) { //select rectangle
+		if(evt == Touch::TOUCH_PRESS) {
+			_rectangle.setPosition(_x, _y);
+			cout << "rectangle touch at " << _x << ", " << _y << endl;
+		} else if(evt == Touch::TOUCH_RELEASE) {
+			_rectangle.width = _x - _rectangle.x;
+			_rectangle.height = _y - _rectangle.y;
+			//identify all faces completely contained in the selected rectangle
+			std::vector<unsigned int> faces = _hullNode->rect2Faces(_rectangle);
+			for(short i = 0; i < faces.size(); i++) {
+				if(_shiftPressed) {
+					_currentSelection->toggleFace(faces[i], false);
+				} else {
+					_currentSelection->addFace(faces[i], false);
+				}
+			}
+			_currentSelection->update();
+			cout << "rectangle release at " << _x << ", " << _y << endl;
+			cout << "rectangle from " << _rectangle.x << "," << _rectangle.y << ", " << _rectangle.width << "x" << _rectangle.height << endl;
+			cout << " => " << faces.size() << " faces" << endl;
 		}
 	}
 	return true;
@@ -388,22 +431,22 @@ short HullMode::Selection::nf() {
 	return _faces.size();
 }
 
-void HullMode::Selection::addFace(short face) {
+void HullMode::Selection::addFace(short face, bool doUpdate) {
 	std::vector<short>::iterator it = std::find(_faces.begin(), _faces.end(), face);
 	if(it == _faces.end()) {
 		_faces.push_back(face);
-		update();
+		if(doUpdate) update();
 	}
 }
 
-void HullMode::Selection::toggleFace(short face) {
+void HullMode::Selection::toggleFace(short face, bool doUpdate) {
 	std::vector<short>::iterator it = std::find(_faces.begin(), _faces.end(), face);
 	if(it != _faces.end()) {
 		_faces.erase(it);
 	} else {
 		_faces.push_back(face);
 	}
-	update();
+	if(doUpdate) update();
 }
 
 void HullMode::Selection::update() {
@@ -439,8 +482,8 @@ void HullMode::Selection::update() {
 				for(k = 0; k < 3; k++) newFace._triangles[j][k] = newInd[face._triangles[j][m == 0 ? k : 2-k]];
 			}
 			_node->addFace(newFace);
-			cout << "ADDING FACE:" << endl;
-			_node->printFace(_node->nf()-1);
+			//cout << "ADDING FACE:" << endl;
+			//_node->printFace(_node->nf()-1);
 		}
 	}
 	_node->updateAll();

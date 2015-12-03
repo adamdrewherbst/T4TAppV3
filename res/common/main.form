@@ -198,8 +198,8 @@ form mainMenu {
 
 				container subMode {
 					style = hiddenContainer
+					autoSize = AUTO_SIZE_HEIGHT
 					autoWidth = true
-					height = 150
 					layout = LAYOUT_VERTICAL
 					
 					button selectRegion {
@@ -219,6 +219,12 @@ form mainMenu {
 						autoWidth = true
 						height = 40
 						text = Select Chain
+					}
+					button selectRectangle {
+						style = buttonStyle
+						autoWidth = true
+						height = 40
+						text = Select Rectangle
 					}
 				}
 				button oneHull {
