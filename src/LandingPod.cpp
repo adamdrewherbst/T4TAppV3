@@ -63,13 +63,17 @@ bool LandingPod::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int co
 				Vector3 trans(center.x, platformBox.max.y + pod->getTranslationWorld().y - podBox.min.y, center.z);
 				Quaternion rot = MyNode::getVectorRotation(normal, Vector3::unitZ());
 				cout << "moving pod to " << app->pv(trans) << endl;
+				cout << "rotating " << app->pq(rot) << endl;
+				Vector3 delta;
+				if(_payload) {
+					_payload->updateTransform();
+					_payload->enablePhysics(false);
+					delta = _payload->getTranslationWorld() - pod->getTranslationWorld();
+				}
 				pod->setMyTranslation(trans);
 				pod->myRotate(rot);
 				pod->enablePhysics(true);
 				if(_payload) {
-					_payload->updateTransform();
-					_payload->enablePhysics(false);
-					Vector3 delta = _payload->getTranslationWorld() - _rootNode->getFirstChild()->getTranslationWorld();
 					_payload->setMyTranslation(trans + delta);
 					_payload->myRotate(rot);
 					_payload->enablePhysics(true);
@@ -177,7 +181,7 @@ void LandingPod::update() {
 	if(_hatching) {
 		_payload->updateTransform();
 		float maxZ = _payload->getMaxValue(Vector3::unitZ()) + _payload->getTranslationWorld().z;
-		cout << _payload->getId() << " hatched to " << maxZ << " [" << _payload->getTranslationWorld().z << "]" << endl;
+		//cout << _payload->getId() << " hatched to " << maxZ << " [" << _payload->getTranslationWorld().z << "]" << endl;
 		if(maxZ > 15) {
 			if(!app->hasMessage()) app->message("You made it 100cm!");
 		}
@@ -235,6 +239,11 @@ void LandingPod::Hatch::addPhysics(short n) {
 	app->addConstraint(parent, node, -1, "hinge", node->_parentOffset, node->_parentAxis, true, true);
 	//fix the hatch in place until we have landed!
 	_lock = ConstraintPtr(app->addConstraint(parent, node, -1, "fixed", node->_parentOffset, node->_parentAxis, false));
+}
+
+void LandingPod::Hatch::deleteNode(short n) {
+	_lock.release();
+	Project::Element::deleteNode(n);
 }
 
 }

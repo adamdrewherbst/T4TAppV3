@@ -21,6 +21,7 @@ public:
 		Hatch(Project *project, Element *parent);
 		void placeNode(short n);
 		void addPhysics(short n);
+		void deleteNode(short n);
 	};
 	
 	Body *_body;
