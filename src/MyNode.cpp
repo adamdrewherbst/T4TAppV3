@@ -1866,7 +1866,7 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 }
 
 void MyNode::updateCamera(bool doPatches) {
-	short nv = this->nv(), nf = this->nf(), i, j;
+	short nv = this->nv(), nf = this->nf(), i, j, k;
 	//transform my vertices and normals to camera space
 	_cameraVertices.resize(nv);
 	_cameraNormals.resize(nf);
@@ -1884,25 +1884,29 @@ void MyNode::updateCamera(bool doPatches) {
 	if(!doPatches) return;
 	_cameraPatches.clear();
 	short n, f, a, b;
-	std::set<unsigned short> faces, edges;
-	std::map<unsigned short, unsigned short> next, oldNext;
+	std::set<int> faces;
 	for(i = 0; i < nf; i++) faces.insert(i);
+	std::list<int> border;
+
 	while(!faces.empty()) {
-		edges.clear();
+
+		std::vector<int> patchFaces;
+
 		//start with one face that is facing the camera
 		f = *faces.begin();
 		faces.erase(f);
 		if(_cameraNormals[f].z > 0) continue;
 		n = _faces[f].size();
 		for(i = 0; i < n; i++) {
-			next[_faces[f][i]] = _faces[f][(i+1)%n];
-			edges.insert(_faces[f][i]);
+			border.push_back(_faces[f][i], false);
 		}
-		//branch out to all its neighbors
-		while(!edges.empty()) {
-			a = *edges.begin();
-			b = next[a];
-			edges.erase(a);
+		patchFaces.push_back(f);
+
+		//iterate around the border, adding faces, until we get back to the beginning
+		std::list<int>::iterator it = border.begin(), it2;
+		do {
+			a = *it;
+			b = *(it+1);
 			if(_edgeInd.find(b) == _edgeInd.end() || _edgeInd[b].find(a) == _edgeInd[b].end() || _edgeInd[b][a] < 0)
 				continue;
 			f = _edgeInd[b][a];
@@ -1911,20 +1915,13 @@ void MyNode::updateCamera(bool doPatches) {
 			if(_cameraNormals[f].z > 0) continue; //make sure neighbor also faces the camera
 			n = _faces[f].size();
 			//merge its edges into the edge map for the patch
-			oldNext = next; //copy the current patch border for reference
-			for(i = 0; i < n; i++) {
-				a = _faces[f][i];
-				b = _faces[f][(i+1)%n];
-				if(oldNext.find(b) != oldNext.end() && oldNext[b] == a) {
-					if(next.find(b) != next.end() && next[b] == a) {
-						next.erase(b);
-						edges.erase(b);
-					}
-				} else {
-					next[a] = b;
-					edges.insert(a);
-				}
+			for(i = 0; i < n && _faces[f][i] != a; i++);
+			for(j = i+1; j < (i+n-1); j++) {
+				border.insert(it2, _faces[f][j]);
+				it2++;
 			}
+			patchFaces.push_back(f);
+			history.push_back(next);
 		}
 		_cameraPatches.resize(_cameraPatches.size()+1);
 		std::vector<unsigned short> &patch = _cameraPatches.back();
@@ -1932,6 +1929,27 @@ void MyNode::updateCamera(bool doPatches) {
 		do {
 			patch.push_back(i);
 			i = next[i];
+			if(i != patch[0] && std::find(patch.begin(), patch.end(), i) != patch.end()) {
+				for(j = 0; j < patch.size(); j++) cout << patch[j] << " ";
+				cout << " => " << i << endl << endl;
+				for(j = 0; j < patchFaces.size(); j++) {
+					cout << patchFaces[j] << ": ";
+					Face &face = _faces[patchFaces[j]];
+					for(k = 0; k < face.size(); k++) cout << face[k] << " ";
+					cout << " => ";
+					std::map<unsigned short, unsigned short> &step = history[j];
+					k = step.begin()->first;
+					std::vector<unsigned short> used;
+					do {
+						cout << k << " ";
+						used.push_back(k);
+						if(step.find(k) == step.end()) break;
+						k = step[k];
+					} while(std::find(used.begin(), used.end(), k) == used.end());
+					cout << endl;
+				}
+				GP_ERROR("broken patch");
+			}
 		} while(i != patch[0]);
 	}
 }
