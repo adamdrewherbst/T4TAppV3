@@ -1886,71 +1886,123 @@ void MyNode::updateCamera(bool doPatches) {
 	short n, f, a, b;
 	std::set<int> faces;
 	for(i = 0; i < nf; i++) faces.insert(i);
-	std::list<int> border;
+
+	struct Border {
+		Border *prev, *next;
+		int vertex;
+		bool checked = false;
+	};
+	Border *current = NULL, *next;
 
 	while(!faces.empty()) {
 
 		std::vector<int> patchFaces;
+		Border *head = NULL;
 
 		//start with one face that is facing the camera
 		f = *faces.begin();
 		faces.erase(f);
 		if(_cameraNormals[f].z > 0) continue;
 		n = _faces[f].size();
+		cout << "starting patch on face " << f << endl;
 		for(i = 0; i < n; i++) {
-			border.push_back(_faces[f][i], false);
+			next = new Border();
+			next->vertex = _faces[f][i];
+			cout << "adding " << next->vertex << endl;
+			next->prev = current;
+			if(current) current->next = next;
+			current = next;
+			if(!head) head = next;
 		}
+		current->next = head;
+		head->prev = current;
 		patchFaces.push_back(f);
 
 		//iterate around the border, adding faces, until we get back to the beginning
-		std::list<int>::iterator it = border.begin(), it2;
+		current = head;
 		do {
-			a = *it;
-			b = *(it+1);
-			if(_edgeInd.find(b) == _edgeInd.end() || _edgeInd[b].find(a) == _edgeInd[b].end() || _edgeInd[b][a] < 0)
+			next = current;
+			a = current->vertex;
+			b = current->next->vertex;
+			if(_edgeInd.find(b) == _edgeInd.end() || _edgeInd[b].find(a) == _edgeInd[b].end() || _edgeInd[b][a] < 0) {
+				current->checked = true;
+				current = current->next;
 				continue;
+			}
 			f = _edgeInd[b][a];
-			if(faces.find(f) == faces.end()) continue;
+			if(faces.find(f) == faces.end()) {
+				current->checked = true;
+				current = current->next;
+				continue;
+			}
 			faces.erase(f);
-			if(_cameraNormals[f].z > 0) continue; //make sure neighbor also faces the camera
+			if(_cameraNormals[f].z > 0) { //make sure neighbor also faces the camera
+				current->checked = true;
+				current = current->next;
+				continue;
+			}
 			n = _faces[f].size();
+			cout << "adding face " << f << endl;
+
 			//merge its edges into the edge map for the patch
 			for(i = 0; i < n && _faces[f][i] != a; i++);
-			for(j = i+1; j < (i+n-1); j++) {
-				border.insert(it2, _faces[f][j]);
-				it2++;
+			cout << _faces[f][i] << " => " << _faces[f][(i+1)%n] << endl;
+			for(j = (i+1)%n; j != i; j = (j+1)%n) {
+				int v = _faces[f][j];
+				//when we backtrack by one, we obviate the current vertex
+				if(v == current->prev->vertex) {
+					cout << "backtrack at " << v << endl;
+					Border *temp = current->prev;
+					current->prev->next = current->next;
+					current->next->prev = current->prev;
+					cout << "deleting " << current->vertex << endl;
+					delete current;
+					current = temp;
+					next = temp;
+				}
+				else {
+					Border *r = current;
+					do {
+						if(v == r->vertex) break;
+						r = r->prev;
+					} while(r && r != current);
+
+					//when we hit another vertex currently in the border, we obviate everything in between it and the current one
+					if(r && v == r->vertex) {
+						cout << "intersect at " << v << endl;
+						Border *s = r->prev, *t;
+						while(s && s != current) {
+							cout << "deleting " << s->vertex << endl;
+							t = s->prev;
+							delete s;
+							s = t;
+						}
+						next->next = r;
+						r->prev = next;
+
+						//and we are done adding this face
+						break;
+					}
+					//otherwise we are just inserting the new vertex in the border
+					else {
+						cout << "inserting " << v << endl;
+						r = new Border();
+						r->vertex = v;
+						r->prev = next;
+						next->next = r;
+						next = r;
+					}
+				}
 			}
 			patchFaces.push_back(f);
-			history.push_back(next);
-		}
+		} while(!current->checked);
 		_cameraPatches.resize(_cameraPatches.size()+1);
 		std::vector<unsigned short> &patch = _cameraPatches.back();
-		i = next.begin()->first;
+		current = next;
 		do {
-			patch.push_back(i);
-			i = next[i];
-			if(i != patch[0] && std::find(patch.begin(), patch.end(), i) != patch.end()) {
-				for(j = 0; j < patch.size(); j++) cout << patch[j] << " ";
-				cout << " => " << i << endl << endl;
-				for(j = 0; j < patchFaces.size(); j++) {
-					cout << patchFaces[j] << ": ";
-					Face &face = _faces[patchFaces[j]];
-					for(k = 0; k < face.size(); k++) cout << face[k] << " ";
-					cout << " => ";
-					std::map<unsigned short, unsigned short> &step = history[j];
-					k = step.begin()->first;
-					std::vector<unsigned short> used;
-					do {
-						cout << k << " ";
-						used.push_back(k);
-						if(step.find(k) == step.end()) break;
-						k = step[k];
-					} while(std::find(used.begin(), used.end(), k) == used.end());
-					cout << endl;
-				}
-				GP_ERROR("broken patch");
-			}
-		} while(i != patch[0]);
+			patch.push_back(current->vertex);
+			current = current->next;
+		} while(current != next);
 	}
 }
 
