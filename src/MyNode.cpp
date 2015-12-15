@@ -653,7 +653,7 @@ void MyNode::init() {
     _loop = false;
     _wireframe = false;
     _lineWidth = 1.0f;
-    _color.set(-1.0f, -1.0f, -1.0f); //indicates no color specified
+    _color.set(-1.0f, -1.0f, -1.0f, 1.0f); //indicates no color specified
     _objType = "none";
     _mass = 0;
     _radius = 0;
@@ -1285,8 +1285,8 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 		str = stream->readLine(line, READ_BUF_SIZE);
 		in.clear();
 		in.str(str);
-		in >> x >> y >> z;
-		_color.set(x, y, z);
+		in >> x >> y >> z >> w;
+		_color.set(x, y, z, w);
 		str = stream->readLine(line, READ_BUF_SIZE);
 		in.clear();
 		in.str(str);
@@ -1468,7 +1468,7 @@ void MyNode::writeData(const char *file, bool modelSpace) {
 	stream->write(line.c_str(), sizeof(char), line.length());
 	if(_type.compare("root") != 0) {
 		os.str("");
-		os << _color.x << "\t" << _color.y << "\t" << _color.z << endl;
+		os << _color.x << "\t" << _color.y << "\t" << _color.z << "\t" << _color.w << endl;
 		Vector3 axis, vec, translation, scale;
 		Quaternion rotation;
 		if(getParent() != NULL && isStatic()) {
@@ -1767,7 +1767,9 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 			for(i = 0; i < n; i++) {
 				for(j = 0; j < 2; j++) {
 					for(k = 0; k < 3; k++) vertices[v++] = gv(mesh->_vertices[(i+j)%nv], k);
-					for(k = 0; k < 3; k++) vertices[v++] = gv(_color, k);
+					vertices[v++] = _color.x;
+					vertices[v++] = _color.y;
+					vertices[v++] = _color.z;
 					if(doTexture) for(k = 0; k < 2; k++) vertices[v++] = 0;
 				}
 			}
@@ -1835,7 +1837,7 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 		Mesh *me = getModel()->getMesh();
 		me->setBoundingBox(box);
 		me->setBoundingSphere(sphere);
-		if(_color.x >= 0) setColor(_color.x, _color.y, _color.z); //updates the model's color
+		if(_color.x >= 0) setColor(_color.x, _color.y, _color.z, _color.w); //updates the model's color
 
 		//update convex hulls and constraints to reflect shift in node origin
 		if(doCenter) {
@@ -2170,11 +2172,13 @@ MaterialParameter* MyNode::getMaterialParameter(const char *name) {
 	return pass->getParameter(name);
 }
 
-void MyNode::setColor(float r, float g, float b, bool save, bool recur) {
-	Vector3 color(r, g, b);
-	if(save) _color = color;
+void MyNode::setColor(float r, float g, float b, float a, bool save, bool recur) {
+	if(save) _color.set(r, g, b, a);
 	MaterialParameter *ambient = getMaterialParameter("u_ambientColor");
-	if(ambient) ambient->setValue(color);
+	if(ambient) ambient->setValue(Vector3(r, g, b));
+	MaterialParameter *alpha = getMaterialParameter("u_modulateAlpha");
+	if(alpha) alpha->setValue(a);
+	if(a < 1) setTag("transparent");
 }
 
 void MyNode::setTexture(const char *imagePath) {

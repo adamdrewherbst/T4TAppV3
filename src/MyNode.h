@@ -25,7 +25,7 @@ public:
 	bool _wireframe, //drawing option for debugging
 		_chain, _loop; //whether node is treated as vertex chain or triangle mesh
 	float _lineWidth; //OpenGL line width if wireframe
-	Vector3 _color;
+	Vector4 _color;
 	
 	//my vertices in the coord frame of the camera
 	std::vector<Vector3> _cameraVertices, _cameraNormals;
@@ -90,7 +90,7 @@ public:
 	void mergeVertices(float threshold);
 	void calculateHulls();
 	MaterialParameter* getMaterialParameter(const char *name);
-	void setColor(float r, float g, float b, bool save = true, bool recur = false);
+	void setColor(float r, float g, float b, float a = 1.0, bool save = true, bool recur = false);
 	void setTexture(const char *imagePath);
 	Model* getModel();
 	Project::Element* getElement();

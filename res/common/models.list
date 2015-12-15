@@ -1,0 +1,23 @@
+box	2	general	body
+sphere	2	general	body
+cylinder	2	general	body
+halfpipe	2	general	body
+stripey_tube	2	general	body
+gear_basic	2	general	gear
+cap_with_hole_1	1	general
+pitri_wheel	1	general
+green_flange_wheel	1	general
+jar_with_cone	1	general
+disk_with_holes	1	general
+threaded_post	1	general
+nose_cone	2	general	wheel
+peepee_cap	2	general	wheel
+plastic_cone	1	general
+foam_roof	1	general	body
+astronaut	1	general
+bread_cone	1	general
+tape_roll	3	general	body	wheel
+hair_curler	2	general body
+felt_arrow	2	general	body
+specimen_cup_90ml_fat	3	general	body	wheel
+perfume_holder	1	general

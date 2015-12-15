@@ -48,9 +48,7 @@ bool Buggy::setSubMode(short mode) {
 			break;
 		} case 1: { //test
 			_rootNode->enablePhysics(false);
-			//Vector3 trans(0, 6, 0);
-			//_rootNode->setMyTranslation(trans);
-			setRampHeight(1);
+			setRampHeight(changed ? 1 : _ramp->getScaleY());
 			app->getPhysicsController()->setGravity(app->_gravity);
 			_ramp->setVisible(true);
 			app->message("Drag the ramp up and down to change its slope.");

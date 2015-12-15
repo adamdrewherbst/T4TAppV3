@@ -17,8 +17,8 @@ Satellite::Satellite() : Project::Project("satellite", "Satellite") {
 
 	_testState->set(40, M_PI/4, M_PI/3);
 
-	_maxRadius = 10.0f;
-	_maxLength = 10.0f;
+	_maxRadius = 50.0f;
+	_maxLength = 50.0f;
 }
 
 bool Satellite::setSubMode(short mode) {

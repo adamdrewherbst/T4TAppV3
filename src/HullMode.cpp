@@ -423,7 +423,7 @@ void HullMode::placeCamera() {
 HullMode::Selection::Selection(HullMode *mode, const char *id, Vector3 color) : _mode(mode) {
 	_node = MyNode::create(id);
 	_node->_type = "red";
-	_node->_color = color;
+	_node->_color.set(color.x, color.y, color.z, 1.0);
 	_mode->_scene->addNode(_node);
 }
 

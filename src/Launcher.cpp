@@ -227,4 +227,9 @@ void Launcher::RubberBand::addPhysics(short n) {
 	_links[n-1] = ConstraintPtr(spring);
 }
 
+void Launcher::RubberBand::deleteNode(short n) {
+	for(int i = 0; i < _numNodes; i++) _links[i].release();
+	Project::Element::deleteNode(n);
+}
+
 }

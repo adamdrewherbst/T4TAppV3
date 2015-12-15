@@ -52,7 +52,7 @@ bool LandingPod::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int co
 	//after launch complete, tap to place the pod at the top of the ramp
 	switch(evt) {
 		case Touch::TOUCH_PRESS:
-			if(_subMode == 1 && _launchComplete && !_broken) {
+			if(_subMode == 1 && _launchComplete && !_broken && !_ramp->_visible) {
 				_ramp->setVisible(true);
 				_ramp->updateTransform();
 				_rootNode->updateTransform();

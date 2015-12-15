@@ -1023,12 +1023,19 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 		node->setTag(tags[i].c_str());
 	}
 	_models->addNode(node);
-	//ImageControl* itemImage = addControl <ImageControl> (_componentMenu, MyNode::concat(2, "comp_", type));
-	Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
-	itemImage->setText(type);
-	itemImage->setZIndex(_componentMenu->getZIndex());
-	//itemImage->setImage("res/png/cowboys-helmet-nobkg.png");
-	//addListener(itemImage, this, Control::Listener::CLICK);
+
+	std::string imageFile = "res/png/item_photos/";
+	imageFile += type;
+	imageFile += "_small.png";
+	if(FileSystem::fileExists(imageFile.c_str())) {
+		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
+		itemImage->setImage(imageFile.c_str());
+		itemImage->setZIndex(_componentMenu->getZIndex());
+	} else {
+		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
+		itemImage->setText(type);
+		itemImage->setZIndex(_componentMenu->getZIndex());
+	}
 }
 
 void T4TApp::filterItemMenu(const char *tag) {

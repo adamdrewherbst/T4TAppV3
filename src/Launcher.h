@@ -14,6 +14,7 @@ public:
 		RubberBand(Project *project);
 		void placeNode(short n);
 		void addPhysics(short n);
+		void deleteNode(short n);
 	};
 
 	RubberBand *_rubberBand;
