@@ -329,7 +329,7 @@ void HullMode::updateModel() {
 	//use the physical mesh, not the visual mesh, when making hulls
 	Meshy *visual = _hullNode->_visualMesh;
 	_hullNode->_visualMesh = NULL;
-	_hullNode->updateModel(false, false);
+	_hullNode->updateModel(true, false);
 	_hullNode->_visualMesh = visual;
 
 	//add all the triangles again, but with opposite orientation, so the user can click on the backwards ones to reverse them
