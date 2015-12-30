@@ -1,18 +1,19 @@
-box	2	general	body
-sphere	2	general	body
-cylinder	2	general	body
-halfpipe	2	general	body
+#box	2	general	body
+#sphere	2	general	body
+#cylinder	2	general	body
+#halfpipe	2	general	body
 stripey_tube	2	general	body
-gear_basic	2	general	gear
-cap_with_hole_1	1	general
+#gear_basic	2	general	gear
+#cap_with_hole_1	1	general
 pitri_wheel	1	general
-green_flange_wheel	1	general
+#green_flange_wheel	1	general
 jar_with_cone	1	general
 disk_with_holes	1	general
 threaded_post	1	general
 nose_cone	2	general	wheel
 peepee_cap	2	general	wheel
-plastic_cone	1	general
+plastic_cone_7_inch	2	general	body
+plastic_cone_5_inch	2	general	body
 foam_roof	1	general	body
 astronaut	1	general
 bread_cone	1	general
@@ -21,11 +22,12 @@ hair_curler	2	general body
 felt_arrow	2	general	body
 specimen_cup_90ml_fat	3	general	body	wheel
 specimen_cup_20ml	2	general	wheel
-perfume_holder	1	general
+perfume_holder	2	general	wheel
 square_plastic_beaker	2	general	body
 test_tube_flat_3_inch	1	general
 test_tube_flat_4_inch	1	general
-plastic_rectangle	1	general
+plastic_rectangle	4	general	instrument	solar_panel	hatch
+plastic_arm	2	general	instrument
 core_plug_with_hole_1_inch_tall	2	general	wheel
 core_plug_with_hole_1_5_inch_tall	2	general	wheel
 core_plug_with_hole_and_spines	2	general	wheel
@@ -33,4 +35,22 @@ core_plug_2_sided_short	2	general	wheel
 core_plug_2_sided_long	2	general	wheel
 core_plug_top_hat	2	general	body
 core_plug_top_hat_open	2	general	body
-spritzer_top	2	general	instrument
+core_plug_hockey_puck	2	general	wheel
+spritzer_top	4	general	instrument	wheel	seat
+spritzer_top_with_cap_on	3	general	instrument	wheel	seat
+dowel_4_inch_by_quarter_inch	2	general	axle
+straw_8_inch_by_quarter_inch	3	general	straw	axle
+tape_roll_connector	4	general	instrument	wheel	hatch
+red_paper_diamond	4	general	instrument	solar_panel	hatch
+coat_hook	2	general	instrument
+eyeglass_lens	2	general	instrument
+sunglass_lens	3	general	instrument	solar_panel
+pipe_fitting_1_inch	4	general	instrument	wheel	seat
+cylinder_with_teeth	4	general	instrument	wheel	seat
+petri_dish_3_5_inch_bottom	3	general	instrument	wheel
+petri_dish_3_5_inch_top	3	general	instrument	wheel
+faucet_cap	4	general	instrument	wheel	seat
+fancy_wheel	3	general	instrument	wheel
+wallbase_sample	3	general	solar_panel	hatch
+cardboard_heart	2	general	body
+cardboard_heart_small	2	general	solar_panel

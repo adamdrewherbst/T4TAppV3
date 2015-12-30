@@ -264,9 +264,11 @@ void T4TApp::initialize()
 	_edge->_wireframe = true;
 	_edge->_lineWidth = 5.0f;
 	_vertex = duplicateModelNode("sphere");
-	_vertex->setScale(0.15f);
-	_vertex->getModel()->setMaterial("res/common/models.material#colored");
-	_vertex->setColor(1.0f, 0.0f, 0.0f);
+	if(_vertex) {
+		_vertex->setScale(0.15f);
+		_vertex->getModel()->setMaterial("res/common/models.material#colored");
+		_vertex->setColor(1.0f, 0.0f, 0.0f);
+	}
 
     addListener(_mainMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
     addListener(_componentMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
