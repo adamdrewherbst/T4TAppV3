@@ -28,9 +28,9 @@ unsigned short Face::nt() const { return _triangles.size(); }
 
 unsigned short& Face::operator[](unsigned short index) { return _border[index]; }
 
-unsigned short Face::front() { return _border.front(); }
+unsigned short Face::front() const { return _border.front(); }
 
-unsigned short Face::back() { return _border.back(); }
+unsigned short Face::back() const { return _border.back(); }
 
 Face::boundary_iterator Face::vbegin() { return _next.begin(); }
 
@@ -139,11 +139,11 @@ Vector3 Face::getNormal(bool modelSpace) const {
 	return modelSpace ? _plane.getNormal() : _worldPlane.getNormal();
 }
 
-float Face::getDistance(bool modelSpace) {
+float Face::getDistance(bool modelSpace) const {
 	return modelSpace ? _plane.getDistance() : _worldPlane.getDistance();
 }
 
-Vector3 Face::getCenter(bool modelSpace) {
+Vector3 Face::getCenter(bool modelSpace) const {
 	Vector3 center(0, 0, 0);
 	short n = size(), i;
 	for(i = 0; i < n; i++) {
@@ -313,7 +313,14 @@ short Meshy::getEdgeFace(unsigned short e1, unsigned short e2) {
 void Meshy::addFace(Face &face) {
 	face._mesh = this;
 	face._index = _faces.size();
-	if(dynamic_cast<MyNode*>(this) != NULL && face._triangles.empty()) face.triangulate();
+	if(face._triangles.empty()) {
+		bool triangulate = true;
+		if(dynamic_cast<MyNode*>(this) == NULL) {
+			MyNode *node = dynamic_cast<MyNode*>(_node);
+			if(!node || node->_visualMesh != this) triangulate = false;
+		}
+		if(triangulate) face.triangulate();
+	}
 	else face.updateEdges();
 	_faces.push_back(face);
 }
@@ -513,6 +520,114 @@ void Meshy::clearMesh() {
 	_vInfo.clear();
 }
 
+bool Meshy::loadMesh(Stream *stream) {
+	char line[READ_BUF_SIZE];
+	std::string str, token;
+	short i, j, k, m, n;
+    float x, y, z, w;
+	std::istringstream in;
+
+	str = stream->readLine(line, READ_BUF_SIZE);
+	int nv = atoi(str.c_str());
+	for(i = 0; i < nv; i++) {
+		str = stream->readLine(line, READ_BUF_SIZE);
+		in.clear();
+		in.str(str);
+		in >> x >> y >> z;
+		_vertices.push_back(Vector3(x, y, z));
+	}
+	//faces, along with their constituent triangles
+	str = stream->readLine(line, READ_BUF_SIZE);
+	int nf = atoi(str.c_str()), faceSize, numHoles, holeSize, numTriangles;
+	std::vector<unsigned short> hole;
+	Vector3 faceNormal, holeNormal;
+	_faces.resize(nf);
+	for(i = 0; i < nf; i++) {
+		Face &face = _faces[i];
+		face._mesh = this;
+		face._index = i;
+		str = stream->readLine(line, READ_BUF_SIZE);
+		in.clear();
+		in.str(str);
+		in >> faceSize;
+		face._border.resize(faceSize);
+		in >> numHoles;
+		face._holes.resize(numHoles);
+		in >> numTriangles;
+		face._triangles.resize(numTriangles);
+		str = stream->readLine(line, READ_BUF_SIZE);
+		in.clear();
+		in.str(str);
+		for(j = 0; j < faceSize; j++) {
+			in >> n;
+			face._border[j] = n;
+		}
+		faceNormal = getNormal(face._border, true);
+		for(j = 0; j < numHoles; j++) {
+			str = stream->readLine(line, READ_BUF_SIZE);
+			holeSize = atoi(str.c_str());
+			hole.resize(holeSize);
+			str = stream->readLine(line, READ_BUF_SIZE);
+			in.clear();
+			in.str(str);
+			for(k = 0; k < holeSize; k++) {
+				in >> n;
+				hole[k] = n;
+			}
+			holeNormal = getNormal(hole, true);
+			if(holeNormal.dot(faceNormal) > 0) std::reverse(hole.begin(), hole.end());
+			face._holes[j] = hole;
+		}
+		for(j = 0; j < numTriangles; j++) {
+			str = stream->readLine(line, READ_BUF_SIZE);
+			in.clear();
+			in.str(str);
+			face._triangles[j].resize(3);
+			for(k = 0; k < 3; k++) {
+				in >> n;
+				face._triangles[j][k] = n;
+			}
+		}
+	}
+	return true;
+}
+
+void Meshy::writeMesh(Stream *stream, bool modelSpace) {
+	short i, j, k;
+	std::string line;
+	std::ostringstream os;
+	Vector3 vec;
+
+	os << _vertices.size() << endl;
+	for(i = 0; i < _vertices.size(); i++) {
+		vec = modelSpace ? _vertices[i] : _worldVertices[i];
+		for(j = 0; j < 3; j++) os << MyNode::gv(vec, j) << "\t";
+		os << endl;
+	}
+	line = os.str();
+	stream->write(line.c_str(), sizeof(char), line.length());
+
+	os.str("");
+	os << _faces.size() << endl;
+	for(i = 0; i < _faces.size(); i++) {
+		short n = _faces[i].size(), nh = _faces[i].nh(), nt = _faces[i].nt();
+		os << n << "\t" << nh << "\t" << nt << endl;
+		for(j = 0; j < n; j++) os << _faces[i][j] << "\t";
+		os << endl;
+		for(j = 0; j < nh; j++) {
+			n = _faces[i].holeSize(j);
+			os << n << endl;
+			for(k = 0; k < n; k++) os << _faces[i].hole(j, k) << "\t";
+			os << endl;
+		}
+		for(j = 0; j < nt; j++) {
+			for(k = 0; k < 3; k++) os << _faces[i].triangle(j, k) << "\t";
+			os << endl;
+		}
+	}
+	line = os.str();
+	stream->write(line.c_str(), sizeof(char), line.length());
+}
 
 MyNode::MyNode(const char *id) : Node::Node(id), Meshy::Meshy()
 {
@@ -538,13 +653,14 @@ void MyNode::init() {
     _loop = false;
     _wireframe = false;
     _lineWidth = 1.0f;
-    _color.set(-1.0f, -1.0f, -1.0f); //indicates no color specified
+    _color.set(-1.0f, -1.0f, -1.0f, 1.0f); //indicates no color specified
     _objType = "none";
     _mass = 0;
     _radius = 0;
     _visible = true;
     _restPosition = Matrix::identity();
     _currentClip = NULL;
+    _visualMesh = NULL;
 }
 
 MyNode* MyNode::cloneNode(Node *node) {
@@ -562,6 +678,11 @@ MyNode* MyNode::cloneNode(Node *node) {
 		copy->_wireframe = myNode->_wireframe;
 		copy->_lineWidth = myNode->_lineWidth;
 		copy->_color = myNode->_color;
+		if(myNode->_visualMesh) {
+			copy->_visualMesh = new Meshy();
+			copy->_visualMesh->_node = copy;
+			copy->_visualMesh->copyMesh(myNode->_visualMesh);
+		}
 	}
 	copy->setDrawable(clone->getDrawable());
 	copy->setCamera(clone->getCamera());
@@ -773,8 +894,8 @@ short MyNode::pt2Face(Vector3 point, Vector3 viewer) {
 	return touchFace;
 }
 
-short MyNode::pix2Face(int x, int y, Vector3 *point) {
-	short i, j, k, nf = this->nf(), nt, touchFace = -1;
+unsigned int MyNode::pix2Face(int x, int y, Vector3 *point) {
+	unsigned int i, j, k, nf = this->nf(), nt, touchFace = -1;
 	Vector3 tri[3], vec, best(0, 0, 1e8);
 	Vector2 tri2[3], pt(x, y), coords;
 	for(i = 0; i < nf; i++) {
@@ -797,6 +918,25 @@ short MyNode::pix2Face(int x, int y, Vector3 *point) {
 	}
 	if(point && touchFace >= 0) *point = best;
 	return touchFace;
+}
+
+std::vector<unsigned int> MyNode::rect2Faces(const Rectangle& rectangle, Vector3 *point) {
+	unsigned int i, j, nf = this->nf(), n;
+	std::vector<unsigned int> faces;
+	for(i = 0; i < nf; i++) {
+		const Face &face = _faces[i];
+		n = face.size();
+		bool contains = true;
+		for(j = 0; j < n; j++) {
+			Vector3 pt = _cameraVertices[face._border[j]];
+			if(!rectangle.contains(pt.x, pt.y)) {
+				contains = false;
+				break;
+			}
+		}
+		if(contains) faces.push_back(i);
+	}
+	return faces;
 }
 
 Plane MyNode::facePlane(unsigned short f, bool modelSpace) {
@@ -1096,10 +1236,10 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 		return false;
 	}
 	stream->rewind();
-	
+
 	//first clear any data currently in this node
 	clearNode();
-	
+
 	//then read the new data from the file
 	_typeCount = 0;
 
@@ -1108,7 +1248,8 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 	short i, j, k, m, n;
     float x, y, z, w;
 	std::istringstream in;
-	
+	int nv, nf, nc, faceSize;
+
 	//check the file version is the latest
 	str = stream->readLine(line, READ_BUF_SIZE);
 	in.clear();
@@ -1124,7 +1265,7 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 		stream->close();
 		return false;
 	}
-	
+
 	//get the version # of this particular model
 	str = stream->readLine(line, READ_BUF_SIZE);
 	in.clear();
@@ -1138,14 +1279,14 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 		in >> token;
 	}
 	_type = token;
-	
+
 	//read the node data
 	if(_type.compare("root") != 0) { //this is a physical node, not just a root node
 		str = stream->readLine(line, READ_BUF_SIZE);
 		in.clear();
 		in.str(str);
-		in >> x >> y >> z;
-		_color.set(x, y, z);
+		in >> x >> y >> z >> w;
+		_color.set(x, y, z, w);
 		str = stream->readLine(line, READ_BUF_SIZE);
 		in.clear();
 		in.str(str);
@@ -1161,69 +1302,12 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 		in.str(str);
 		in >> x >> y >> z;
 		setScale(x, y, z);
-		str = stream->readLine(line, READ_BUF_SIZE);
-		short nv = atoi(str.c_str());
-		for(i = 0; i < nv; i++) {
-			str = stream->readLine(line, READ_BUF_SIZE);
-			in.clear();
-			in.str(str);
-			in >> x >> y >> z;
-			_vertices.push_back(Vector3(x, y, z));
-		}
-		//faces, along with their constituent triangles
-		str = stream->readLine(line, READ_BUF_SIZE);
-		short nf = atoi(str.c_str()), faceSize, numHoles, holeSize, numTriangles;
-		std::vector<unsigned short> hole;
-		Vector3 faceNormal, holeNormal;
-		_faces.resize(nf);
-		for(i = 0; i < nf; i++) {
-			Face &face = _faces[i];
-			face._mesh = this;
-			face._index = i;
-			str = stream->readLine(line, READ_BUF_SIZE);
-			in.clear();
-			in.str(str);
-			in >> faceSize;
-			face._border.resize(faceSize);
-			in >> numHoles;
-			face._holes.resize(numHoles);
-			in >> numTriangles;
-			face._triangles.resize(numTriangles);
-			str = stream->readLine(line, READ_BUF_SIZE);
-			in.clear();
-			in.str(str);
-			for(j = 0; j < faceSize; j++) {
-				in >> n;
-				face._border[j] = n;
-			}
-			faceNormal = getNormal(face._border, true);
-			for(j = 0; j < numHoles; j++) {
-				str = stream->readLine(line, READ_BUF_SIZE);
-				holeSize = atoi(str.c_str());
-				hole.resize(holeSize);
-				str = stream->readLine(line, READ_BUF_SIZE);
-				in.clear();
-				in.str(str);
-				for(k = 0; k < holeSize; k++) {
-					in >> n;
-					hole[k] = n;
-				}
-				holeNormal = getNormal(hole, true);
-				if(holeNormal.dot(faceNormal) > 0) std::reverse(hole.begin(), hole.end());
-				face._holes[j] = hole;
-			}
-			for(j = 0; j < numTriangles; j++) {
-				str = stream->readLine(line, READ_BUF_SIZE);
-				in.clear();
-				in.str(str);
-				face._triangles[j].resize(3);
-				for(k = 0; k < 3; k++) {
-					in >> n;
-					face._triangles[j][k] = n;
-				}
-			}
-		}
+
+		//load the vertex and face data
+		if(!loadMesh(stream.get())) return false;
+
 		//COLLADA components
+		nv = this->nv();
 		_componentInd.resize(nv);
 		str = stream->readLine(line, READ_BUF_SIZE);
 		short nc = atoi(str.c_str()), size;
@@ -1332,6 +1416,14 @@ bool MyNode::loadData(const char *file, bool doPhysics, bool doTexture)
 				}
 			}
 		}
+		//there may be a separate mesh for display purposes
+		str = stream->readLine(line, READ_BUF_SIZE);
+		int hasVisual = atoi(str.c_str());
+		if(hasVisual) {
+			_visualMesh = new Meshy();
+			_visualMesh->_node = this;
+			_visualMesh->loadMesh(stream.get());
+		}
 	}
 	//see if this node has any children
 	str = stream->readLine(line, READ_BUF_SIZE);
@@ -1376,7 +1468,7 @@ void MyNode::writeData(const char *file, bool modelSpace) {
 	stream->write(line.c_str(), sizeof(char), line.length());
 	if(_type.compare("root") != 0) {
 		os.str("");
-		os << _color.x << "\t" << _color.y << "\t" << _color.z << endl;
+		os << _color.x << "\t" << _color.y << "\t" << _color.z << "\t" << _color.w << endl;
 		Vector3 axis, vec, translation, scale;
 		Quaternion rotation;
 		if(getParent() != NULL && isStatic()) {
@@ -1396,35 +1488,12 @@ void MyNode::writeData(const char *file, bool modelSpace) {
 		os << axis.x << "\t" << axis.y << "\t" << axis.z << "\t" << angle << endl;
 		os << translation.x << "\t" << translation.y << "\t" << translation.z << endl;
 		os << scale.x << "\t" << scale.y << "\t" << scale.z << endl;
-		os << _vertices.size() << endl;
-		for(i = 0; i < _vertices.size(); i++) {
-			vec = modelSpace ? _vertices[i] : _worldVertices[i];
-			for(j = 0; j < 3; j++) os << gv(vec, j) << "\t";
-			os << endl;
-		}
 		line = os.str();
 		stream->write(line.c_str(), sizeof(char), line.length());
 
-		os.str("");
-		os << _faces.size() << endl;
-		for(i = 0; i < _faces.size(); i++) {
-			short n = _faces[i].size(), nh = _faces[i].nh(), nt = _faces[i].nt();
-			os << n << "\t" << nh << "\t" << nt << endl;
-			for(j = 0; j < n; j++) os << _faces[i][j] << "\t";
-			os << endl;
-			for(j = 0; j < nh; j++) {
-				n = _faces[i].holeSize(j);
-				os << n << endl;
-				for(k = 0; k < n; k++) os << _faces[i].hole(j, k) << "\t";
-				os << endl;
-			}
-			for(j = 0; j < nt; j++) {
-				for(k = 0; k < 3; k++) os << _faces[i].triangle(j, k) << "\t";
-				os << endl;
-			}
-		}
-		line = os.str();
-		stream->write(line.c_str(), sizeof(char), line.length());
+		//write the vertex and face data
+		writeMesh(stream.get(), modelSpace);
+
 		os.str("");
 		os << _components.size() << endl;
 		std::map<std::string, std::vector<std::vector<unsigned short> > >::iterator it;
@@ -1487,8 +1556,12 @@ void MyNode::writeData(const char *file, bool modelSpace) {
 			os << _parentNormal.x << "\t" << _parentNormal.y << "\t" << _parentNormal.z;
 		}
 		os << endl;
+		os << (_visualMesh ? "1" : "0") << endl;
 		line = os.str();
 		stream->write(line.c_str(), sizeof(char), line.length());
+		if(_visualMesh) {
+			_visualMesh->writeMesh(stream.get(), modelSpace);
+		}
 	}
 	//write any child nodes to their respective files
 	std::vector<MyNode*> children;
@@ -1619,6 +1692,7 @@ void MyNode::stopAnimation() {
 void MyNode::updateTransform() {
 	Meshy::updateTransform();
 	for(short i = 0; i < _hulls.size(); i++) _hulls[i]->updateTransform();
+	if(_visualMesh) _visualMesh->updateTransform();
 	for(Node *child = getFirstChild(); child; child = child->getNextSibling()) {
 		MyNode *node = dynamic_cast<MyNode*>(child);
 		if(node) node->updateTransform();
@@ -1648,7 +1722,7 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 
 		//update the mesh to contain the new coordinates
 		float radius = 0, f1;
-		unsigned short i, j, k, m, n, v = 0, nv = this->nv(), nf = this->nf();
+		unsigned int i, j, k, m, n, v = 0, nv = this->nv(), nf = this->nf();
 		Vector3 min(1000,1000,1000), max(-1000,-1000,-1000);
 		bool hasPhysics = _objType.compare("none") != 0;
 		doCenter = doCenter && hasPhysics;
@@ -1677,33 +1751,44 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 		} else sphereCenter = center;
 		BoundingBox box(min, max);
 		BoundingSphere sphere(sphereCenter, radius);
-		
-		unsigned short vertexSize = doTexture ? 8 : 6, ind;
+
+		unsigned short vertexSize = doTexture ? 8 : 6;
+		unsigned int ind, triangleCount = 0;
 
 		//then create the new model
+		if(_visualMesh) _visualMesh->updateAll();
+		Meshy *mesh = _visualMesh ? _visualMesh : this;
+		nv = mesh->nv();
+		nf = mesh->nf();
 		std::vector<float> vertices;
 		if(_chain) {
 			n = _loop ? nv : nv-1;
 			vertices.resize(2 * n * vertexSize);
 			for(i = 0; i < n; i++) {
 				for(j = 0; j < 2; j++) {
-					for(k = 0; k < 3; k++) vertices[v++] = gv(_vertices[(i+j)%nv], k);
-					for(k = 0; k < 3; k++) vertices[v++] = gv(_color, k);
+					for(k = 0; k < 3; k++) vertices[v++] = gv(mesh->_vertices[(i+j)%nv], k);
+					vertices[v++] = _color.x;
+					vertices[v++] = _color.y;
+					vertices[v++] = _color.z;
 					if(doTexture) for(k = 0; k < 2; k++) vertices[v++] = 0;
 				}
 			}
 		} else {
 			n = 0;
-			for(i = 0; i < nf; i++) n += _faces[i].nt() * 3;
+			for(i = 0; i < nf; i++) {
+				n += mesh->_faces[i].nt() * 3;
+				if(mesh->_faces[i].nt() == 0) GP_WARN("face %d has no triangles", i);
+			}
 			vertices.resize(n * vertexSize);
 			std::map<unsigned short, float> texU, texV;
+			bool bufferAligned = true;
 			for(i = 0; i < nf; i++) {
-				n = _faces[i].size();
+				n = mesh->_faces[i].size();
 				if(doTexture) { //determine the texcoord for each vertex in the face
 					texU.clear();
 					texV.clear();
 					for(j = 0; j < n; j++) {
-						ind = _faces[i][j];
+						ind = mesh->_faces[i][j];
 						switch(n) {
 							case 3:
 								switch(j) {
@@ -1726,12 +1811,17 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 						}
 					}
 				}
-				n = _faces[i].nt();
-				normal = _faces[i].getNormal(true);
+				n = mesh->_faces[i].nt();
+				normal = mesh->_faces[i].getNormal(true);
 				for(j = 0; j < n; j++) {
+					bufferAligned = v == triangleCount * (3 * vertexSize);
+					if(_type.compare("hair_curler") == 0 && !bufferAligned) {
+						GP_ERROR("starting triangle %d (face %d triangle %d) at %d + %d", triangleCount, i, j, v/(3*vertexSize), v%(3*vertexSize));
+						bufferAligned = false;
+					}
 					for(k = 0; k < 3; k++) {
-						ind = _faces[i].triangle(j, k);
-						vec = _vertices[ind];
+						ind = mesh->_faces[i].triangle(j, k);
+						vec = mesh->_vertices[ind];
 						for(m = 0; m < 3; m++) vertices[v++] = gv(vec, m);
 						for(m = 0; m < 3; m++) vertices[v++] = gv(normal, m);
 						if(doTexture) {
@@ -1739,14 +1829,15 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 							vertices[v++] = texV.find(ind) != texV.end() ? texV[ind] : 0;
 						}
 					}
+					triangleCount++;
 				}
 			}
 		}
 		app->createModel(vertices, _chain, _id.c_str(), this, doTexture);
-		Mesh *mesh = getModel()->getMesh();
-		mesh->setBoundingBox(box);
-		mesh->setBoundingSphere(sphere);
-		if(_color.x >= 0) setColor(_color.x, _color.y, _color.z); //updates the model's color
+		Mesh *me = getModel()->getMesh();
+		me->setBoundingBox(box);
+		me->setBoundingSphere(sphere);
+		if(_color.x >= 0) setColor(_color.x, _color.y, _color.z, _color.w); //updates the model's color
 
 		//update convex hulls and constraints to reflect shift in node origin
 		if(doCenter) {
@@ -1777,7 +1868,7 @@ void MyNode::updateModel(bool doPhysics, bool doCenter, bool doTexture) {
 }
 
 void MyNode::updateCamera(bool doPatches) {
-	short nv = this->nv(), nf = this->nf(), i, j;
+	short nv = this->nv(), nf = this->nf(), i, j, k;
 	//transform my vertices and normals to camera space
 	_cameraVertices.resize(nv);
 	_cameraNormals.resize(nf);
@@ -1795,55 +1886,125 @@ void MyNode::updateCamera(bool doPatches) {
 	if(!doPatches) return;
 	_cameraPatches.clear();
 	short n, f, a, b;
-	std::set<unsigned short> faces, edges;
-	std::map<unsigned short, unsigned short> next, oldNext;
+	std::set<int> faces;
 	for(i = 0; i < nf; i++) faces.insert(i);
+
+	struct Border {
+		Border *prev, *next;
+		int vertex;
+		bool checked = false;
+	};
+	Border *current = NULL, *next;
+
 	while(!faces.empty()) {
-		edges.clear();
+
+		std::vector<int> patchFaces;
+		Border *head = NULL;
+
 		//start with one face that is facing the camera
 		f = *faces.begin();
 		faces.erase(f);
 		if(_cameraNormals[f].z > 0) continue;
 		n = _faces[f].size();
+		cout << "starting patch on face " << f << endl;
 		for(i = 0; i < n; i++) {
-			next[_faces[f][i]] = _faces[f][(i+1)%n];
-			edges.insert(_faces[f][i]);
+			next = new Border();
+			next->vertex = _faces[f][i];
+			cout << "adding " << next->vertex << endl;
+			next->prev = current;
+			if(current) current->next = next;
+			current = next;
+			if(!head) head = next;
 		}
-		//branch out to all its neighbors
-		while(!edges.empty()) {
-			a = *edges.begin();
-			b = next[a];
-			edges.erase(a);
-			if(_edgeInd.find(b) == _edgeInd.end() || _edgeInd[b].find(a) == _edgeInd[b].end() || _edgeInd[b][a] < 0)
+		current->next = head;
+		head->prev = current;
+		patchFaces.push_back(f);
+
+		//iterate around the border, adding faces, until we get back to the beginning
+		current = head;
+		do {
+			next = current;
+			a = current->vertex;
+			b = current->next->vertex;
+			if(_edgeInd.find(b) == _edgeInd.end() || _edgeInd[b].find(a) == _edgeInd[b].end() || _edgeInd[b][a] < 0) {
+				current->checked = true;
+				current = current->next;
 				continue;
+			}
 			f = _edgeInd[b][a];
-			if(faces.find(f) == faces.end()) continue;
+			if(faces.find(f) == faces.end()) {
+				current->checked = true;
+				current = current->next;
+				continue;
+			}
 			faces.erase(f);
-			if(_cameraNormals[f].z > 0) continue; //make sure neighbor also faces the camera
+			if(_cameraNormals[f].z > 0) { //make sure neighbor also faces the camera
+				current->checked = true;
+				current = current->next;
+				continue;
+			}
 			n = _faces[f].size();
+			cout << "adding face " << f << endl;
+
 			//merge its edges into the edge map for the patch
-			oldNext = next; //copy the current patch border for reference
-			for(i = 0; i < n; i++) {
-				a = _faces[f][i];
-				b = _faces[f][(i+1)%n];
-				if(oldNext.find(b) != oldNext.end() && oldNext[b] == a) {
-					if(next.find(b) != next.end() && next[b] == a) {
-						next.erase(b);
-						edges.erase(b);
+			for(i = 0; i < n && _faces[f][i] != a; i++);
+			cout << _faces[f][i] << " => " << _faces[f][(i+1)%n] << endl;
+			for(j = (i+1)%n; j != i; j = (j+1)%n) {
+				int v = _faces[f][j];
+				//when we backtrack by one, we obviate the current vertex
+				if(v == current->prev->vertex) {
+					cout << "backtrack at " << v << endl;
+					Border *temp = current->prev;
+					current->prev->next = current->next;
+					current->next->prev = current->prev;
+					cout << "deleting " << current->vertex << endl;
+					delete current;
+					current = temp;
+					next = temp;
+				}
+				else {
+					Border *r = current;
+					do {
+						if(v == r->vertex) break;
+						r = r->prev;
+					} while(r && r != current);
+
+					//when we hit another vertex currently in the border, we obviate everything in between it and the current one
+					if(r && v == r->vertex) {
+						cout << "intersect at " << v << endl;
+						Border *s = r->prev, *t;
+						while(s && s != current) {
+							cout << "deleting " << s->vertex << endl;
+							t = s->prev;
+							delete s;
+							s = t;
+						}
+						next->next = r;
+						r->prev = next;
+
+						//and we are done adding this face
+						break;
 					}
-				} else {
-					next[a] = b;
-					edges.insert(a);
+					//otherwise we are just inserting the new vertex in the border
+					else {
+						cout << "inserting " << v << endl;
+						r = new Border();
+						r->vertex = v;
+						r->prev = next;
+						next->next = r;
+						next = r;
+					}
 				}
 			}
-		}
+			patchFaces.push_back(f);
+		} while(!current->checked);
 		_cameraPatches.resize(_cameraPatches.size()+1);
 		std::vector<unsigned short> &patch = _cameraPatches.back();
-		i = next.begin()->first;
+		current = next;
 		do {
-			patch.push_back(i);
-			i = next[i];
-		} while(i != patch[0]);
+			patch.push_back(current->vertex);
+			current = current->next;
+		} while(current != next);
 	}
 }
 
@@ -2011,11 +2172,13 @@ MaterialParameter* MyNode::getMaterialParameter(const char *name) {
 	return pass->getParameter(name);
 }
 
-void MyNode::setColor(float r, float g, float b, bool save, bool recur) {
-	Vector3 color(r, g, b);
-	if(save) _color = color;
+void MyNode::setColor(float r, float g, float b, float a, bool save, bool recur) {
+	if(save) _color.set(r, g, b, a);
 	MaterialParameter *ambient = getMaterialParameter("u_ambientColor");
-	if(ambient) ambient->setValue(color);
+	if(ambient) ambient->setValue(Vector3(r, g, b));
+	MaterialParameter *alpha = getMaterialParameter("u_modulateAlpha");
+	if(alpha) alpha->setValue(a);
+	if(a < 1) setTag("transparent");
 }
 
 void MyNode::setTexture(const char *imagePath) {
@@ -2246,6 +2409,7 @@ void MyNode::shiftModel(float x, float y, float z) {
 	for(i = 0; i < n; i++) {
 		_hulls[i]->shiftModel(x, y, z);
 	}
+	if(_visualMesh) _visualMesh->shiftModel(x, y, z);
 }
 
 void MyNode::translateToOrigin() {
@@ -2319,10 +2483,15 @@ void MyNode::updateMaterial(bool recur) {
 	if(light == NULL) return;
 	Model *model = getModel();
 	if(model == NULL) return;
-	Technique *technique = model->getMaterial()->getTechnique();
-	if(technique == NULL) return;
-	technique->getParameter("u_directionalLightColor[0]")->setValue(light->getColor());
-	technique->getParameter("u_directionalLightDirection[0]")->bindValue(lightNode, &Node::getForwardVectorView);
+	unsigned int partCount = model->getMeshPartCount(), n = partCount > 0 ? partCount : 1, i;
+	for(i = 0; i < n; i++) {
+		Technique *technique = model->getMaterial(partCount > 0 ? i : -1)->getTechnique();
+		if(technique == NULL) continue;
+		MaterialParameter *color = technique->getParameter("u_directionalLightColor[0]"),
+			*direction = technique->getParameter("u_directionalLightDirection[0]");
+		color->setValue(light->getColor());
+		direction->bindValue(lightNode, &Node::getForwardVectorView);
+	}
 }
 
 void MyNode::setBase() {

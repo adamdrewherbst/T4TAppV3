@@ -254,10 +254,10 @@ void Project::highlightNode(MyNode *node, bool select) {
 	for(i = 0; i < n; i++) {
 		MyNode *curNode = nodes[i];
 		if(select) {
-			curNode->setColor(0.6f, 1.0f, 0.6f, false, true);
+			curNode->setColor(0.6f, 1.0f, 0.6f, 1.0, false, true);
 		} else {
-			Vector3 prev = curNode->_color;
-			curNode->setColor(prev.x, prev.y, prev.z, true, true);
+			Vector4 prev = curNode->_color;
+			curNode->setColor(prev.x, prev.y, prev.z, prev.w, true, true);
 		}
 	}
 }

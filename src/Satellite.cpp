@@ -6,19 +6,14 @@ namespace T4T {
 
 Satellite::Satellite() : Project::Project("satellite", "Satellite") {
 
-	app->addItem("solarPanel", 1, "instrument");
-	app->addItem("heatSensor", 2, "instrument", "seat");
-	app->addItem("cameraProbe", 2, "instrument", "seat");
-	app->addItem("gravityProbe", 2, "instrument", "seat");
-
 	_body = (Body*) addElement(new Body(this));
 	_instruments = (Instrument*) addElement(new Instrument(this, _body));
 	setupMenu();
-	
+
 	_testState->set(40, M_PI/4, M_PI/3);
 
-	_maxRadius = 10.0f;
-	_maxLength = 10.0f;
+	_maxRadius = 50.0f;
+	_maxLength = 50.0f;
 }
 
 bool Satellite::setSubMode(short mode) {
@@ -29,6 +24,7 @@ bool Satellite::setSubMode(short mode) {
 			break;
 		} case 1: { //test
 			//check that it fits in the cylinder
+			_rootNode->updateTransform();
 			std::vector<MyNode*> nodes = _rootNode->getAllNodes();
 			short i, j, n = nodes.size(), nv;
 			float radius, maxRadius = 0, minZ = 1e6, maxZ = -1e6;
@@ -104,7 +100,7 @@ void Satellite::Instrument::setNode(const char *id) {
 void Satellite::Instrument::addNode() {
 	Project::Element::addNode();
 	if(_addingPanels > 0) {
-		_currentNodeId = "solarPanel";
+		_currentNodeId = "sunglass_lens";
 		std::ostringstream os;
 		os << "Click to add " << _addingPanels << " more solar panels to power your instrument";
 		app->message(os.str().c_str());
@@ -139,15 +135,7 @@ float Satellite::Instrument::getMass(const char *type) {
 }
 
 short Satellite::Instrument::getPanelsNeeded(const char *type) {
-	if(strcmp(type, "heatSensor") == 0) {
-		return 3;
-	} else if(strcmp(type, "gravityProbe") == 0) {
-		return 2;
-	} else if(strcmp(type, "cameraProbe") == 0) {
-		return 1;
-	} else if(strcmp(type, "solarPanel") == 0) {
-		return 0;
-	}
+	return 1;
 }
 
 float Satellite::Instrument::getTotalMass() {

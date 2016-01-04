@@ -6,19 +6,15 @@ namespace T4T {
 
 Buggy::Buggy() : Project::Project("buggy", "Lunar Buggy") {
 
-	app->addItem("axle1", 2, "general", "axle");
-	app->addItem("wheel1", 2, "general", "wheel");
-	app->addItem("wheel2", 2, "general", "wheel");
-
 	_body = addElement(new Body(this));
 	_frontAxle = addElement(new Axle(this, _body, "frontAxle", "Front Axle"));
 	_rearAxle = addElement(new Axle(this, _body, "rearAxle", "Rear Axle"));
 	_frontWheels = addElement(new Wheels(this, _frontAxle, "frontWheels", "Front Wheels"));
 	_rearWheels = addElement(new Wheels(this, _rearAxle, "rearWheels", "Rear Wheels"));
 	setupMenu();
-	
+
 	_finishDistance = 10;
-	
+
 	_testState->set(60, 0, M_PI/8);
 
 	_ramp = MyNode::create("buggyRamp");
@@ -48,9 +44,7 @@ bool Buggy::setSubMode(short mode) {
 			break;
 		} case 1: { //test
 			_rootNode->enablePhysics(false);
-			//Vector3 trans(0, 6, 0);
-			//_rootNode->setMyTranslation(trans);
-			setRampHeight(1);
+			setRampHeight(changed ? 1 : _ramp->getScaleY());
 			app->getPhysicsController()->setGravity(app->_gravity);
 			_ramp->setVisible(true);
 			app->message("Drag the ramp up and down to change its slope.");

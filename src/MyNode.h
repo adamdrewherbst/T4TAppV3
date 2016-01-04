@@ -25,12 +25,15 @@ public:
 	bool _wireframe, //drawing option for debugging
 		_chain, _loop; //whether node is treated as vertex chain or triangle mesh
 	float _lineWidth; //OpenGL line width if wireframe
-	Vector3 _color;
+	Vector4 _color;
 	
 	//my vertices in the coord frame of the camera
 	std::vector<Vector3> _cameraVertices, _cameraNormals;
 	//the outlines of the contiguous regions of my surface that face the camera
 	std::vector<std::vector<unsigned short> > _cameraPatches;
+	
+	//if this node has a different mesh for display purposes (ie. more detailed)
+	Meshy *_visualMesh;
 
 	//COLLADA component info, for making hulls en masse
 	//-for each component, stores the ID and the list of instances as vertex sets
@@ -87,7 +90,7 @@ public:
 	void mergeVertices(float threshold);
 	void calculateHulls();
 	MaterialParameter* getMaterialParameter(const char *name);
-	void setColor(float r, float g, float b, bool save = true, bool recur = false);
+	void setColor(float r, float g, float b, float a = 1.0, bool save = true, bool recur = false);
 	void setTexture(const char *imagePath);
 	Model* getModel();
 	Project::Element* getElement();
@@ -126,7 +129,8 @@ public:
 
 	bool getTouchPoint(int x, int y, Vector3 *point, Vector3 *normal);
 	short pt2Face(Vector3 point, Vector3 viewer = Vector3::zero());
-	short pix2Face(int x, int y, Vector3 *point = NULL);
+	unsigned int pix2Face(int x, int y, Vector3 *point = NULL);
+	std::vector<unsigned int> rect2Faces(const Rectangle& rectangle, Vector3 *point = NULL);
 	Plane facePlane(unsigned short f, bool modelSpace = false);
 	Vector3 faceCenter(unsigned short f, bool modelSpace = false);
 	void setGroundRotation();

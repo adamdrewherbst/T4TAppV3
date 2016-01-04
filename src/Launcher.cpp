@@ -12,9 +12,9 @@ Launcher::Launcher() : Project::Project("launcher", "CEV Launcher") {
 
 	_rubberBand = (RubberBand*) addElement(new RubberBand(this));
 	setupMenu();
-	
+
 	_finishDistance = 15;
-	
+
 	_testState->set(80, 0, M_PI/3);
 
 	_table = MyNode::create("table1");
@@ -225,6 +225,11 @@ void Launcher::RubberBand::addPhysics(short n) {
 	spring->setLinearStrengthX(1.0f);
 	spring->setEnabled(false);
 	_links[n-1] = ConstraintPtr(spring);
+}
+
+void Launcher::RubberBand::deleteNode(short n) {
+	for(int i = 0; i < _numNodes; i++) _links[i].release();
+	Project::Element::deleteNode(n);
 }
 
 }

@@ -22,7 +22,7 @@ Robot::Robot() : Project::Project("robot", "Robot") {
 	_pathNode = MyNode::create("robotPath");
 	_pathNode->_type = "grid";
 	_pathNode->_chain = true;
-	_pathNode->_color.set(1.0f, 0.0f, 1.0f);
+	_pathNode->_color.set(1.0f, 0.0f, 1.0f, 1.0f);
 	_pathNode->_lineWidth = 7.0f;
 	_scene->addNode(_pathNode);
 

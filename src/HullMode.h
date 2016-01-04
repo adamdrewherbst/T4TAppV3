@@ -15,14 +15,15 @@ public:
 		MyNode *_node; //for display
 		
 		Selection(HullMode *mode, const char *id, Vector3 color = Vector3::unitX());
-		void addFace(short face);
-		void toggleFace(short face);
+		void addFace(short face, bool doUpdate = true);
+		void toggleFace(short face, bool doUpdate = true);
 		void clear();
 		void update();
 		void reverseFaces();
 		short nf();
 	};
 	Selection *_region, *_ring, *_chain, *_currentSelection;
+	Rectangle _rectangle;
 	bool _shiftPressed, _ctrlPressed;
 	MyNode *_hullNode;
 	Container *_axisContainer;

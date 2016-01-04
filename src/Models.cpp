@@ -107,11 +107,31 @@ void T4TApp::generateModels() {
 
 #endif
 
-	loadModels("res/common/models.list");
+	//loadModels("res/common/models.list");
 
 }
 
-void T4TApp::loadModels(const char *filename) {
+void T4TApp::loadModels() {
+	_models = Scene::create("models");
+	Stream *stream = FileSystem::open("res/common/models.list");
+	if(!stream) return;
+	char *arr, str[2048];
+	std::string modelName, tag;
+	short numTags;
+	while((arr = stream->readLine(str, 2048))) {
+		std::istringstream in(arr);
+		in >> modelName >> numTags;
+		if(modelName[0] == '#') continue;
+		std::vector<std::string> tags;
+		for(short i = 0; i < numTags; i++) {
+			in >> tag;
+			tags.push_back(tag);
+		}
+		addItem(modelName.c_str(), tags);
+	}
+}
+
+/*void T4TApp::loadModels(const char *filename) {
 	std::unique_ptr<Stream> stream(FileSystem::open(filename));
     if(!stream) return;
 	stream->rewind();
@@ -143,7 +163,7 @@ void T4TApp::loadModels(const char *filename) {
 		}
 	}
 	stream->close();
-}
+}*/
 
 MyNode* T4TApp::generateModel(const char *id, const char *type, ...) {
 	va_list arguments;
@@ -373,7 +393,39 @@ MyNode* T4TApp::generateModel(const char *id, const char *type, ...) {
 	return node;
 }
 
-void T4TApp::loadObj(const char *filename) {
+bool T4TApp::loadObj(const char *type) {
+
+	std::string filename = "res/models_src/";
+	filename += type;
+	filename += ".obj";
+	if(!FileSystem::fileExists(filename.c_str())) return false;
+
+	GP_WARN("Loading OBJ %s", type);
+
+	//load the node data
+	MyNode *node = MyNode::create(type);
+	node->_type = type;
+	Vector3 shift(-1e6, 0, 0);
+	node->loadObj(filename.c_str(), &shift);
+
+	//see if we have a separate mesh for display purposes
+	std::string fileStr = filename;
+	size_t start = fileStr.find(".obj");
+	if(start != std::string::npos) {
+		fileStr = fileStr.replace(start, 4, "_visual.obj");
+		if(FileSystem::fileExists(fileStr.c_str())) {
+			node->_visualMesh = new Meshy();
+			node->_visualMesh->_node = node;
+			node->_visualMesh->loadObj(fileStr.c_str(), &shift);
+		}
+	}
+	node->setOneHull();
+	node->writeData("res/models/");
+	node->clearMesh();
+	return true;
+}
+
+void Meshy::loadObj(const char *filename, Vector3 *shift) {
 	std::unique_ptr<Stream> stream(FileSystem::open(filename));
 	stream->rewind();
 
@@ -381,10 +433,16 @@ void T4TApp::loadObj(const char *filename) {
 	  *token = (char*)malloc(100*sizeof(char));
 	short i, j, k, m, n, ind, vOffset = 0;
     float x, y, z, w;
-    Vector3 scale, vertex;
+    Vector3 scale(1, 1, 1), vertex;
     std::vector<unsigned short> face;
     bool reverseFace = false;
-	MyNode *node = MyNode::create("node");
+
+    MyNode *node = dynamic_cast<MyNode*>(this);
+    if(node) {
+	    node->_objType = "mesh";
+    	node->_mass = 10.0f;
+    }
+
 	while(!stream->eof()) {
 		strcpy(label, "");
 		str = stream->readLine(line, 2048);
@@ -399,7 +457,7 @@ void T4TApp::loadObj(const char *filename) {
 			reverseFace = m > 0;
 		} else if(strcmp(label, "v") == 0) { //vertex
 			in >> x >> y >> z;
-			node->addVertex(x, y, z);
+			addVertex(x, y, z);
 		} else if(strcmp(label, "f") == 0) { //face
 			face.clear();
 			in >> token;
@@ -411,32 +469,35 @@ void T4TApp::loadObj(const char *filename) {
 				face.push_back(ind-1 - vOffset);
 				in >> token;
 			}
-			node->addFace(face, reverseFace);
+			addFace(face, reverseFace);
 		}
-		if((/*strcmp(label, "g") == 0 ||*/ stream->eof()) && node->nv() > 0) { //end of current model
-			n = node->nv();
-			vertex.set(0, 0, 0);
-			for(i = 0; i < n; i++) vertex += node->_vertices[i];
-			vertex *= 1.0f / n;
-			for(i = 0; i < n; i++) {
-				node->_vertices[i] -= vertex;
-				node->_vertices[i].x *= scale.x;
-				node->_vertices[i].y *= scale.y;
-				node->_vertices[i].z *= scale.z;
+		if((/*strcmp(label, "g") == 0 ||*/ stream->eof()) && nv() > 0) { //end of current model
+			n = nv();
+			Vector3 &offset = *(shift ? shift : new Vector3());
+			if(offset.x < -1e5) {
+				offset.set(0, 0, 0);
+				for(i = 0; i < n; i++) offset += _vertices[i];
+				offset *= 1.0f / n;
 			}
-			node->setOneHull();
-			node->writeData("res/models/");
-			node->clearMesh();
-			//vOffset += n;
-		}
-		if(strcmp(label, "g") == 0 && node->nv() == 0) { //start of new model
-			in >> nodeName;
-			node->setId(nodeName);
-			node->_type = nodeName;
-			node->_objType = "mesh";
-			node->_mass = 10.0f;
-			scale.set(1, 1, 1);
-			cout << endl << "Model: " << nodeName << endl;
+			GP_WARN("shifting by %f %f %f", offset.x, offset.y, offset.z);
+			for(i = 0; i < n; i++) {
+				_vertices[i] -= offset;
+				_vertices[i].x *= scale.x;
+				_vertices[i].y *= scale.y;
+				_vertices[i].z *= scale.z;
+			}
+   		}
+		if(strcmp(label, "g") == 0 && nv() == 0) { //start of new model
+			MyNode *node = dynamic_cast<MyNode*>(this);
+			if(node) {
+				in >> nodeName;
+				node->setId(nodeName);
+				node->_type = nodeName;
+				node->_objType = "mesh";
+				node->_mass = 10.0f;
+				scale.set(1, 1, 1);
+				cout << endl << "Model: " << nodeName << endl;
+			}
 		}
 	}
 	stream->close();
@@ -445,17 +506,17 @@ void T4TApp::loadObj(const char *filename) {
 #ifdef USE_COLLADA
 using namespace pugi;
 
-void T4TApp::loadDAE(const char *filename) {
-	std::string nodeId = filename;
-	size_t start = nodeId.find_last_of('/'), end = nodeId.find_first_of('.');
-	if(start == std::string::npos) start = -1;
-	if(end == std::string::npos) end = nodeId.length()-1;
-	nodeId = nodeId.substr(start+1, end-start-1);
-	MyNode *node = MyNode::create(nodeId.c_str());
-	node->_type = nodeId;
+bool T4TApp::loadDAE(const char *type) {
+	std::string filename = "res/models_src/";
+	filename += type;
+	filename += ".dae";
+	if(!FileSystem::fileExists(filename.c_str())) return false;
+
+	MyNode *node = MyNode::create(type);
+	node->_type = type;
 
 	xml_document doc;
-	xml_parse_result result = doc.load_file(filename);
+	xml_parse_result result = doc.load_file(filename.c_str());
 	//get the model's global scale factor
 	float scale = 1;
 	xpath_node scaleNode = doc.select_node("//scale");
@@ -580,6 +641,7 @@ void T4TApp::loadDAE(const char *filename) {
 	if(scale != 1) node->scaleModel(scale);
 
 	node->writeData("res/models/");
+	return true;
 }
 
 void T4TApp::loadXMLNode(xml_document &doc, xml_node &xnode, Matrix world, MyNode *node, std::vector<Meshy*> &meshes) {
