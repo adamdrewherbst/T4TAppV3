@@ -60,6 +60,10 @@ public:
      */
     static const char* getResourcePath();
 
+    static void setExternalPath(const char* path);
+
+    static const char* getExternalPath();
+
     /**
      * Loads a properties file containing a list of filesystem aliases.
      *
@@ -144,7 +148,7 @@ public:
      * 
      * @return <code>true</code> if the file exists; <code>false</code> otherwise.
      */
-    static bool fileExists(const char* filePath);
+    static bool fileExists(const char* filePath, bool external = false);
 
     /**
      * Opens a byte stream for the given resource path.
