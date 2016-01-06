@@ -177,7 +177,12 @@ public:
             /**
              * Event triggered when a control loses focus.
              */
-            FOCUS_LOST      = 0x400
+            FOCUS_LOST      = 0x400,
+
+            /**
+             * Event triggered when a control is activated in another manner (such as pressing enter in text control)
+             */
+            ACTIVATED      = 0x800,
         };
 
         /*

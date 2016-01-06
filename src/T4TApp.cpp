@@ -1013,7 +1013,10 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	filebase += type;
 	filename = filebase + ".node";
 	if(!FileSystem::fileExists(filename.c_str())) {
-		if(!loadObj(type)) loadDAE(type);
+        bool hasObj = loadObj(type);
+#ifdef USE_COLLADA
+		if(!hasObj) loadDAE(type);
+#endif
 	}
 
 	//then load the node file

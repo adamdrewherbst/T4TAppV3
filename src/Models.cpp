@@ -133,6 +133,7 @@ void T4TApp::loadModels() {
 
 /*void T4TApp::loadModels(const char *filename) {
 	std::unique_ptr<Stream> stream(FileSystem::open(filename));
+    if(!stream) return;
 	stream->rewind();
 
 	char *str, line[2048], *modelFile = (char*)malloc(300*sizeof(char));
