@@ -122,7 +122,7 @@ material workbench
             // samplers
             sampler u_diffuseTexture
             {
-            	path = res/png/workbench_texture.png
+            	path = res/png/workbench_512.png
                 mipmap = true
                 wrapS = REPEAT
                 wrapT = REPEAT
