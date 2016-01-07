@@ -81,6 +81,7 @@ void Face::setTransform() {
 
 void Face::updateTransform() {
 	_worldPlane = _plane;
+	if(_worldPlane.getNormal().length() == 0) return;
 	_worldPlane.transform(_mesh->_worldMatrix);
 }
 

@@ -16,7 +16,7 @@ void NavigateMode::setActive(bool active) {
 		app->_cameraMenu->setPosition(20, 10);
 	} else {
 		app->_cameraMenu->setX(0.8f, true);
-        app->_cameraMenu->setY(10);
+	        app->_cameraMenu->setY(10);
 	}
 	//don't let the user turn off navigation in this mode
 	app->_cameraMenu->getControl("eye")->setEnabled(!active);
