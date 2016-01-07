@@ -124,7 +124,7 @@ form mainMenu {
 		container camera {
 			style = basicContainer
 			position = 900, 10
-			size = 180, 350
+			size = 21%, 56%
 			layout = LAYOUT_VERTICAL
 			consumeInputEvents = true
 			zIndex = 20
@@ -132,45 +132,45 @@ form mainMenu {
 			image eye {
 				style = imageWide
 				autoWidth = true
-				height = 90
+				height = 25%
 				path = res/png/eye.png
 				tooltip = Toggle between navigation and building modes
 			}			
 			container subMode {
 				style = hiddenContainer
 				autoWidth = true
-				height = 150
+				height = 50%
 				layout = LAYOUT_FLOW
 				
 				image rotate {
 					style = imageSquare
-					size = 75, 75
+                    size = 60, 60
 					path = res/png/rotate.png
 					tooltip = Rotate the camera by dragging
 				}
 				image translate {
 					style = imageSquare
-					size = 75, 75
+                    size = 60, 60
 					path = res/png/translate.png
 					tooltip = Translate the camera by dragging
 				}
 				image zoom {
 					style = imageSquare
-					size = 75, 75
-					path = res/png/zoom.png
+                    size = 60, 60
+                    path = res/png/zoom.png
 					tooltip = Zoom in and out by dragging up and down
 				}
 			}
 			button axis {
 				style = buttonStyle
 				autoWidth = true
-				height = 40
+				height = 12%
 				text = X
 			}
 			button reset {
 				style = buttonStyle
 				autoWidth = true
-				height = 40
+				height = 12%
 				text = Reset
 				tooltip = Move the camera back to its starting position
 			}
