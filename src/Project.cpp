@@ -274,24 +274,75 @@ bool Project::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int conta
 	Mode::touchEvent(evt, x, y, contactIndex);
 	if(getTouchNode() && getTouchNode() != touchNode) touchNode = getTouchNode();
 	if(app->_navMode >= 0) return false;
-	if(touchNode != NULL && touchNode->_element != NULL && touchNode->_element->_project == this) {
-		//see if we are placing a node on its parent
-		Element *current = getEl();
-		if(evt == Touch::TOUCH_PRESS && current && current->_currentNodeId
-		  && (current->_isOther || current->_parent == touchNode->getBaseElement())) {
-			setSelectedNode(NULL);
-			current->addNode();
-		}
-		//otherwise just trigger whatever node we clicked
-		else {
-			if(evt == Touch::TOUCH_PRESS) {
-				short n = _elements.size(), i;
-				for(i = 0; i < n; i++) if(_elements[i].get() == touchNode->_element) setCurrentElement(i);
-			}
-			getEl()->touchEvent(evt, x, y, contactIndex);
-		}
-	}
+    Element *el = getEl();
+    if(el) {
+    }
     return true;
+}
+    
+void Project::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
+{
+    va_list arguments;
+    va_start(arguments, y);
+    switch(evt) {
+        case Gesture::GESTURE_TAP: {
+            GP_WARN("tap in project %s", _id.c_str());
+            Mode::gestureEvent(evt, x, y);
+            if(app->_navMode < 0) {
+                GP_WARN("checking for attachment");
+                _touchPt.set(Touch::TOUCH_RELEASE, x, y, true);
+                MyNode *touchNode = getTouchNode(Touch::TOUCH_RELEASE);
+                if(touchNode != NULL && touchNode->_element != NULL && touchNode->_element->_project == this) {
+                    GP_WARN("selected element %s", touchNode->getBaseElement()->_id.c_str());
+                    //see if we are placing a node on its parent
+                    Element *current = getEl();
+                    GP_WARN("current = %s => %s", current->_currentNodeId, current->_parent->_id.c_str());
+                    if(current && current->_currentNodeId && (current->_isOther || current->_parent == touchNode->getBaseElement())) {
+                        setSelectedNode(NULL);
+                        current->addNode();
+                    } else {
+                        short n = _elements.size(), i;
+                        for(i = 0; i < n; i++) if(_elements[i].get() == touchNode->_element) {
+                            setCurrentElement(i);
+                            getEl()->setTouchNode(touchNode);
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        case Gesture::GESTURE_LONG_TAP: {
+            float duration = (float) va_arg(arguments, double);
+            Mode::gestureEvent(evt, x, y, duration);
+            break;
+        }
+        case Gesture::GESTURE_PINCH: {
+            float scale = (float) va_arg(arguments, double);
+            Mode::gestureEvent(evt, x, y, scale);
+            break;
+        }
+        case Gesture::GESTURE_DRAG:
+        case Gesture::GESTURE_DROP:
+        {
+            Mode::gestureEvent(evt, x, y);
+            if(app->_navMode < 0) {
+                Element *el = getEl();
+                if(el) el->gestureEvent(evt, x, y);
+            }
+            break;
+        }
+        case Gesture::GESTURE_ROTATE: {
+            float rotation = (float) va_arg(arguments, double), velocity = (float) va_arg(arguments, double);
+            Mode::gestureEvent(evt, x, y, rotation, velocity);
+            if(app->_navMode < 0) {
+                Element *el = getEl();
+                if(el) el->gestureEvent(evt, x, y, rotation, velocity);
+            }
+            break;
+        }
+        default: break;
+    }
+    va_end(arguments);
 }
 
 void Project::deleteSelected() {
@@ -655,6 +706,7 @@ Project::Element::Element(Project *project, Element *parent, const char *id, con
 	}
 	addAction("delete");
 	_attachState = new CameraState();
+    _dragging = false;
 }
 
 void Project::Element::setParent(Element *parent) {
@@ -725,6 +777,12 @@ void Project::Element::doAction(const char *action) {
 	if(strcmp(action, "add") == 0) {
 		_project->promptItem();
 	}
+}
+    
+void Project::Element::setTouchNode(MyNode *node) {
+    for(short i = 0; i < getNodeCount(); i++) {
+        if(getNode(i) == node) _touchInd = i;
+    }
 }
 
 void Project::Element::setNode(const char *id) {
@@ -921,10 +979,7 @@ bool Project::Element::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned 
 						}
 						break;
 					} case Touch::TOUCH_RELEASE: {
-						for(i = start; i < end; i++) {
-							addPhysics(i);
-							enablePhysics(true, i);
-						}
+
 						break;
 					}
 				}
@@ -1034,6 +1089,61 @@ bool Project::Element::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned 
 	if(evt == Touch::TOUCH_RELEASE) {
 		_touchInd = -1;
 	}
+}
+    
+void Project::Element::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...) {
+    va_list args;
+    va_start(args, y);
+    short start = _touchInd - _touchInd % _numNodes, end = start + _numNodes, i;
+    switch(evt) {
+        case Gesture::GESTURE_TAP: {
+            break;
+        }
+        case Gesture::GESTURE_LONG_TAP: {
+            float duration = (float) va_arg(args, double);
+            break;
+        }
+        case Gesture::GESTURE_DRAG: {
+            MyNode *node = _nodes[_touchInd].get(), *parent = getTouchParent(_touchInd);
+            if(!_dragging) {
+                parent->updateTransform();
+                parent->updateCamera();
+                Vector3 point = getAnchorPoint(_touchInd);
+                _project->_touchPt.set(Touch::TOUCH_PRESS, x, y, point);
+                cout << "touched " << node->getId() << ", currently at " << app->pv(point) << endl;
+                for(i = start; i < end; i++) {
+                    enablePhysics(false, i);
+                }
+                _dragging = true;
+            } else {
+                _project->_touchPt.set(Touch::TOUCH_MOVE, x, y, parent);
+                cout << "moving to " << app->pv(_project->_touchPt.getPoint(Touch::TOUCH_MOVE)) << endl;
+                for(i = start; i < end; i++) {
+                    placeNode(i);
+                    cout << "  anchor point at " << app->pv(getBaseNode(i)->getAnchorPoint()) << endl;
+                }
+            }
+            break;
+        }
+        case Gesture::GESTURE_DROP: {
+            for(i = start; i < end; i++) {
+                addPhysics(i);
+                enablePhysics(true, i);
+            }
+            _dragging = false;
+            break;
+        }
+        case Gesture::GESTURE_PINCH: {
+            float scale = (float) va_arg(args, double);
+            break;
+        }
+        case Gesture::GESTURE_ROTATE: {
+            float rotation = (float) va_arg(args, double), velocity = (float) va_arg(args, double);
+            break;
+        }
+        default: break;
+    }
+    va_end(args);
 }
 
 CameraState* Project::Element::getAttachState() {

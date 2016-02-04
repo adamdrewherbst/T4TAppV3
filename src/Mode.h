@@ -39,6 +39,7 @@ public:
 	const char *getId();
 		
 	virtual bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+    virtual void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
 	virtual void controlEvent(Control *control, Control::Listener::EventType evt);
 	virtual bool keyEvent(Keyboard::KeyEvent evt, int key);
 	virtual void setActive(bool active);

@@ -128,7 +128,7 @@ void Rocket::update() {
 			Vector3 center = anchor->getAnchorPoint() + (scale * _balloons->_balloonRadius[i] * anchor->getJointNormal());
 			balloon->setMyTranslation(center);
 			//apply the air pressure force
-			Vector3 force = -Vector3::unitZ();
+			Vector3 force = Vector3::unitZ();
 			balloon->getWorldMatrix().transformVector(&force);
 			force *= 200 * scale;
 			((PhysicsRigidBody*)anchor->getCollisionObject())->applyForce(force);
@@ -258,6 +258,11 @@ void Rocket::Balloon::placeNode(short n) {
 		balloon->setTranslation(-(balloonRadius - anchorRadius), 0, 0);
 	}
 	
+    //flip the balloon relative to the anchor depending on which side of the straw, to keep the nozzle pointing backward
+    float offsetAngle = point.x < 0 ? 0 : M_PI;
+    Quaternion offsetRot;
+    Quaternion::createFromAxisAngle(Vector3::unitY(), offsetAngle, &offsetRot);
+    balloon->setRotation(offsetRot);
 	anchor->attachTo(straw, point, trans);
 	anchor->_constraintParent = straw;
 }

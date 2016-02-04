@@ -130,24 +130,15 @@ bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactI
 	_camera->pickRay(app->getViewport(), _x, _y, &_ray);
 	switch(evt) {
 		case Touch::TOUCH_PRESS: {
-			cout << "mode ray: " << app->pv(_ray.getOrigin()) << " => " << app->pv(_ray.getDirection()) << endl;
-			MyNode *node = getTouchNode();
-			if(node) node->updateTransform();
-			if(isSelecting()) {
-				Vector3 point = getTouchPoint();
-				if(node) node->setBase();
-				setSelectedNode(node, point);
-				if(node) cout << "selected: " << node->getId() << " at " << app->pv(point) << endl;
-			} else {
+			if(!isSelecting()) {
 				_cameraBase->getNode()->set(*_camera->getNode());
 				_viewportBase = app->getViewport();
 				app->_cameraState->copy(_cameraStateBase);
-				cout << "touched: camera at " << _cameraStateBase->print() << endl;
 			}
 			break;
 		} case Touch::TOUCH_MOVE: {
 			if(isTouching() && app->_navMode >= 0) {
-				placeCamera();
+				//placeCamera();
 			}
 			break;
 		} case Touch::TOUCH_RELEASE: {
@@ -156,7 +147,62 @@ bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactI
 	}
 	return true;
 }
-
+    
+void Mode::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
+{
+    va_list arguments;
+    va_start(arguments, y);
+    switch(evt) {
+        case Gesture::GESTURE_TAP: {
+            if(isSelecting()) {
+                MyNode *node = getTouchNode();
+                Vector3 point = getTouchPoint();
+                if(node) {
+                    node->updateTransform();
+                    node->setBase();
+                }
+                setSelectedNode(node, point);
+                if(node) GP_WARN("selected %s at %s", node->getId(), app->pv(point).c_str());
+            }
+            break;
+        }
+        case Gesture::GESTURE_LONG_TAP:
+            break;
+        case Gesture::GESTURE_PINCH: {
+            float scale = (float) va_arg(arguments, double);
+            if(app->_navMode >= 0) {
+                float baseRadius = _cameraStateBase->radius;
+                app->setCameraZoom(fminf(300.0f, fmaxf(3.0f, baseRadius / fmaxf(scale, 0.01f))));
+            }
+            break;
+        }
+        case Gesture::GESTURE_DRAG: {
+            if(app->_navMode >= 0) {
+                Vector2 touch = getTouchPix(), delta(x - touch.x, y - touch.y);
+                float radius = _cameraStateBase->radius, theta = _cameraStateBase->theta, phi = _cameraStateBase->phi;
+                float deltaPhi = delta.y * M_PI / 400.0f, deltaTheta = delta.x * M_PI / 400.0f;
+                phi = fmin(89.9f * M_PI/180, fmax(-89.9f * M_PI/180, phi + deltaPhi));
+                theta += deltaTheta;
+                app->setCameraEye(radius, theta, phi);
+            }
+            break;
+        }
+        case Gesture::GESTURE_DROP: {
+            break;
+        }
+        case Gesture::GESTURE_ROTATE: {
+            float rotation = (float) va_arg(arguments, double), velocity = (float) va_arg(arguments, double);
+            if(app->_navMode >= 0) {
+                float theta = _cameraStateBase->theta;
+                app->setCameraTheta(theta + rotation);
+            }
+            break;
+        }
+        default: break;
+    }
+    va_end(arguments);
+}
+    
 void Mode::controlEvent(Control *control, Control::Listener::EventType evt) {
 	const char *id = control->getId();
 	//if(control != this)
@@ -173,7 +219,9 @@ void Mode::controlEvent(Control *control, Control::Listener::EventType evt) {
 	}
 }
 
-bool Mode::keyEvent(Keyboard::KeyEvent evt, int key) {}
+bool Mode::keyEvent(Keyboard::KeyEvent evt, int key) {
+    return false;
+}
 
 bool Mode::isTouching() {
 	return _touchPt._touching;

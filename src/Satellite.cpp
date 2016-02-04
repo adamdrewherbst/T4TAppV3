@@ -91,6 +91,7 @@ void Satellite::Instrument::setNode(const char *id) {
 	short numPanels = getPanelsNeeded(id);
 	if(total + mass + 1.0f*numPanels > _maxMass) {
 		app->message("Can't add that instrument - mass would be too high");
+        GP_WARN("already have mass %f, trying to add %f", total, mass);
 		return;
 	}
 	_addingPanels = numPanels;
@@ -115,7 +116,7 @@ void Satellite::Instrument::placeNode(short n) {
 void Satellite::Instrument::addPhysics(short n) {
 	Project::Element::addPhysics(n);
 	MyNode *node = _nodes[n].get(),
-		*parent = dynamic_cast<MyNode*>(node->getParent() ? node->getParent() : _project->getTouchNode());
+        *parent = dynamic_cast<MyNode*>(node->getParent() ? node->getParent() : _project->getTouchNode(Touch::TOUCH_RELEASE));
 	PhysicsConstraint *constraint = app->addConstraint(parent, node, node->_constraintId, "fixed",
 		node->_parentOffset, node->_parentAxis, true, true);
 	constraint->setBreakingImpulse(100);
@@ -131,7 +132,8 @@ float Satellite::Instrument::getMass(const char *type) {
 		return 30.0f;
 	} else if(strcmp(type, "solarPanel") == 0) {
 		return 1.0f;
-	}
+    }
+    return 10.0f;
 }
 
 short Satellite::Instrument::getPanelsNeeded(const char *type) {

@@ -14,7 +14,7 @@ public:
 		T4TApp *app;
 		Project *_project;
 		std::string _id, _name;
-		bool _static, _multiple, _isOther, _movable[3], _rotable[3], _complete;
+		bool _static, _multiple, _isOther, _movable[3], _rotable[3], _complete, _dragging;
 		float _limits[3][2];
 		short _moveRef, _numNodes, _touchInd;
 		std::vector<std::shared_ptr<MyNode> > _nodes;
@@ -41,6 +41,8 @@ public:
 		void setParent(Element *parent);
 		void addChild(Element *child);
 		virtual bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+        virtual void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
+        virtual void setTouchNode(MyNode *node);
 		short getNodeCount();
 		MyNode* getNode(short n = 0);
 		virtual MyNode* getBaseNode(short n = 0);
@@ -125,6 +127,7 @@ public:
 	MyNode* getNode(short n = -1);
 	void controlEvent(Control *control, Control::Listener::EventType evt);
 	bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+    void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
 	void setCurrentElement(short n);
 	void promptNextElement();
 	void setInSequence(bool seq);

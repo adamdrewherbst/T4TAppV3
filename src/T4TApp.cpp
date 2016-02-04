@@ -52,6 +52,14 @@ void T4TApp::initialize()
 	// Load font
 	_font = Font::create("res/common/fonts/arial-distance.gpb");
 	assert(_font);
+    
+    setMultiTouch(true);
+    registerGesture(Gesture::GESTURE_TAP);
+    registerGesture(Gesture::GESTURE_LONG_TAP);
+    registerGesture(Gesture::GESTURE_PINCH);
+    registerGesture(Gesture::GESTURE_DRAG);
+    registerGesture(Gesture::GESTURE_DROP);
+    registerGesture(Gesture::GESTURE_ROTATE);
 
 	splash("Initializing...");
 
@@ -644,11 +652,36 @@ void T4TApp::setNavMode(short mode) {
 	}
 }
 
-void T4TApp::gestureLongTapEvent(int x, int y, float duration) {
-	Logger::log(Logger::LEVEL_INFO, "long tap at %d, %d - %f", x, y, duration);
-	message("LONG TAP BRO!");
+void T4TApp::gestureTapEvent(int x, int y)
+{
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_TAP, x, y);
 }
-
+    
+void T4TApp::gestureLongTapEvent(int x, int y, float duration)
+{
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_LONG_TAP, x, y, duration);
+}
+    
+void T4TApp::gesturePinchEvent(int x, int y, float scale)
+{
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_PINCH, x, y, scale);
+}
+    
+void T4TApp::gestureDragEvent(int x, int y)
+{
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_DRAG, x, y);
+}
+    
+void T4TApp::gestureDropEvent(int x, int y)
+{
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_DROP, x, y);
+}
+    
+void T4TApp::gestureRotateEvent(int x, int y, float rotation, float velocity)
+{
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_ROTATE, x, y, rotation, velocity);
+}
+    
 void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 {
 	const char *id = control->getId();
@@ -1642,6 +1675,16 @@ void T4TApp::setCameraEye(float radius, float theta, float phi) {
 void T4TApp::setCameraZoom(float radius) {
 	_cameraState->radius = radius;
 	placeCamera();
+}
+
+void T4TApp::setCameraTheta(float theta) {
+    _cameraState->theta = theta;
+    placeCamera();
+}
+    
+void T4TApp::setCameraPhi(float phi) {
+    _cameraState->phi = phi;
+    placeCamera();
 }
 
 void T4TApp::setCameraTarget(Vector3 target) {
