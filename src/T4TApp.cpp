@@ -117,12 +117,14 @@ void T4TApp::initialize()
 	_stage = (Container*)_mainMenu->getControl("stage");
 	_sceneMenu = (Container*)_mainMenu->getControl("submenu_sceneMenu");
 	_machineMenu = (Container*)_mainMenu->getControl("submenu_machineMenu");
-	_modePanel = (Container*)_sideMenu->getControl("modePanel");
 	_cameraMenu = (Container*)_stage->getControl("camera");
 
 	_tooltipWrapper = Form::create("res/common/main.form#tooltipWrapper");
 	_tooltip = (Label*)_tooltipWrapper->getControl("tooltip");
 	_tooltipWrapper->setVisible(false);
+    
+    _projectMenu = Form::create("res/common/main.form#projectMenu");
+    _projectContainer = (Container*) _projectMenu->getControl("projects");
 
 	//make a button group for the navigation modes
 	ButtonGroup *eyeGroup = ButtonGroup::create("eye"), *navGroup = ButtonGroup::create("navModes");
@@ -133,14 +135,6 @@ void T4TApp::initialize()
 	short n = navButtons.size(), i;
 	for(i = 0; i < n; i++) {
 		navGroup->addButton(navButtons[i]);
-	}
-
-	//and the projects
-	ButtonGroup *modeGroup = ButtonGroup::create("modes");
-	std::vector<Control*> modeButtons = _modePanel->getControls();
-	n = modeButtons.size();
-	for(i = 0; i < n; i++) {
-		modeGroup->addButton(modeButtons[i]);
 	}
 
 	_exit = (Button*) ((Container*)_mainMenu->getControl("exitMenu"))->getControl("exit");
@@ -279,6 +273,7 @@ void T4TApp::initialize()
 	}
 
     addListener(_mainMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
+    addListener(_projectMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
     addListener(_componentMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
 
 	_activeMode = -1;
@@ -339,12 +334,13 @@ void T4TApp::resizeEvent(unsigned int width, unsigned int height) {
 
 	if(!_mainMenu) return;
 	
-	_stage->setWidth(width - _sideMenu->getWidth());
-	_stage->setHeight(height);
-
 	_componentMenu->setPosition(_sideMenu->getX() + _sideMenu->getWidth() + 25.0f, 25.0f);
 	_componentMenu->setWidth(width - 2 * _componentMenu->getX());
 	_componentMenu->setHeight(height - 2 * _componentMenu->getY());
+
+    _projectMenu->setPosition(_sideMenu->getX() + _sideMenu->getWidth() + 25.0f, 25.0f);
+    _projectMenu->setWidth(width - 2 * _projectMenu->getX());
+    _projectMenu->setHeight(height - 2 * _projectMenu->getY());
 }
 
 void T4TApp::free() {
@@ -369,6 +365,7 @@ void T4TApp::update(float elapsedTime)
 {
 	if(_activeMode >= 0) _modes[_activeMode]->update();
     _mainMenu->update(elapsedTime);
+    _projectMenu->update(elapsedTime);
     _componentMenu->update(elapsedTime);
     _tooltipWrapper->update(elapsedTime);
 	short n = _forms.size(), i;
@@ -448,6 +445,7 @@ void T4TApp::render(float elapsedTime)
     }
     
 	_mainMenu->draw();
+    _projectMenu->draw();
 	_componentMenu->draw();
 	_tooltipWrapper->draw();
 	short n = _forms.size(), i;
@@ -654,6 +652,7 @@ void T4TApp::setNavMode(short mode) {
 
 void T4TApp::gestureTapEvent(int x, int y)
 {
+    if(_componentMenu->isVisible() || _projectMenu->isVisible()) return;
     if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_TAP, x, y);
 }
     
@@ -662,9 +661,9 @@ void T4TApp::gestureLongTapEvent(int x, int y, float duration)
     if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_LONG_TAP, x, y, duration);
 }
     
-void T4TApp::gesturePinchEvent(int x, int y, float scale)
+void T4TApp::gesturePinchEvent(int x, int y, float scale, int state)
 {
-    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_PINCH, x, y, scale);
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_PINCH, x, y, scale, state);
 }
     
 void T4TApp::gestureDragEvent(int x, int y)
@@ -677,9 +676,9 @@ void T4TApp::gestureDropEvent(int x, int y)
     if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_DROP, x, y);
 }
     
-void T4TApp::gestureRotateEvent(int x, int y, float rotation, float velocity)
+void T4TApp::gestureRotateEvent(int x, int y, float rotation, float velocity, int state)
 {
-    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_ROTATE, x, y, rotation, velocity);
+    if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_ROTATE, x, y, rotation, velocity, state);
 }
     
 void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
@@ -709,9 +708,14 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 		mode->controlEvent(control, evt);
 		return;
 	}
+    
+    //toggle the main menu
+    if(strcmp(id, "menuToggle") == 0) {
+        _sideMenu->setVisible(!_sideMenu->isVisible());
+    }
 
 	//login/register
-	if(control == _login) {
+	else if(control == _login) {
 		if(strcmp(_login->getText(), "Login") == 0) {
 			_loginForm->show();
 		} else {
@@ -736,6 +740,10 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 			if(!login()) loadProjects(true);
 		}
 	}
+    //choose project
+    else if(strcmp(id, "chooseProject") == 0) {
+        _projectMenu->setVisible(true);
+    }
 	//scene operations
 	else if(_sceneMenu->getControl(id) == control) {
 		if(strcmp(id, "new") == 0) {
@@ -808,8 +816,8 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 			resetCamera();
 		}
 	}
-	else if(_modePanel->getControl(id) == control || _machineMenu->getControl(id) == control) {
-		//simple machines and interactive modes are functionally equivalent, just in different submenus
+    else if(_projectMenu->getControl(id) == control) {
+        _projectMenu->setVisible(false);
 		for(short i = 0; i < _modes.size(); i++) {
 			if(strcmp(_modes[i]->getId(), id) == 0) setMode(i);
 		}
@@ -1069,10 +1077,12 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
 		itemImage->setImage(imageFile.c_str());
 		itemImage->setZIndex(_componentMenu->getZIndex());
+        itemImage->setConsumeInputEvents(true);
 	} else {
 		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
 		itemImage->setText(type);
 		itemImage->setZIndex(_componentMenu->getZIndex());
+        itemImage->setConsumeInputEvents(true);
 	}
 }
 

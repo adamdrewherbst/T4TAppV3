@@ -122,11 +122,12 @@ bool Launcher::positionPayload() {
 	BoundingBox box = seat->getBoundingBox(false, false);
 	Vector3 seatCenter = box.getCenter();
 	_astronaut->setMyTranslation(Vector3(seatCenter.x, box.max.y - _astronautBox.min.y, seatCenter.z));
-	_astronaut->setMyRotation(MyNode::getVectorRotation(Vector3::unitZ(), Vector3::unitY()));
+	_astronaut->setAnchorRotation(MyNode::getVectorRotation(Vector3::unitZ(), Vector3::unitY()));
 	PhysicsConstraint *constraint = app->addConstraint(seat, _astronaut, _astronaut->_constraintId, "fixed",
 		Vector3(seatCenter.x, box.max.y, seatCenter.z), Vector3::unitY(), true);
 	constraint->setBreakingImpulse(1000.0f);
 	constraint->setEnabled(false);
+    return true;
 }
 
 bool Launcher::removePayload() {
@@ -136,6 +137,7 @@ bool Launcher::removePayload() {
 		parent->removeChild(_astronaut);
 	}
 	Project::removePayload();
+    return true;
 }
 
 void Launcher::setStretch(float stretch) {

@@ -8,18 +8,26 @@ form mainMenu {
 	fontSize = 14
 	layout = LAYOUT_ABSOLUTE
 	consumeInputEvents = false
-	
-	//primary menu bar - contains submenu handles
+
+    button menuToggle {
+        style = buttonStyle
+        position = 0, 0
+        size = 100, 40
+        text = Menu
+    }
+
+    //primary menu bar - contains submenu handles
 	container sideMenu {
 		style = basicContainer
-		position = 0, 0
+		position = 0, 50
 		width = 200
-		autoHeight = true
+		autoSize = AUTO_SIZE_HEIGHT
 		//default alignment is top_left which doesn't allow horizontal positioning with autoHeight
-		alignment = ALIGN_TOP
+		//alignment = ALIGN_TOP
 		consumeInputEvents = true
 		layout = LAYOUT_VERTICAL
 		zIndex = 10
+        visible = false
 		
 		button login {
 			style = buttonStyle
@@ -33,6 +41,12 @@ form mainMenu {
 			height = 40
 			text = Register
 		}
+        button chooseProject {
+            style = buttonStyle
+            autoWidth = true
+            height = 40
+            text = Choose Project
+        }
 		button saveAll {
 			style = buttonStyle
 			autoWidth = true
@@ -46,19 +60,6 @@ form mainMenu {
 			text = Show Physics
 			checked = false
 		}
-		container modePanel {
-			style = hiddenContainer
-			autoWidth = true
-			autoSize = AUTO_SIZE_HEIGHT
-			layout = LAYOUT_VERTICAL
-
-			button hull {
-				style = buttonStyle
-				autoWidth = true
-				height = 40
-				text = Hull
-			}
-		}
 	}
 	
 	container exitMenu {
@@ -66,6 +67,7 @@ form mainMenu {
 		autoSize = AUTO_SIZE_BOTH
 		layout = LAYOUT_FLOW
 		alignment = ALIGN_BOTTOM_RIGHT
+        consumeInputEvents = true
 		
 		button exit {
 			style = buttonStyle
@@ -99,7 +101,8 @@ form mainMenu {
 	//the region of the screen where graphics are drawn and touches are handled
 	container stage {
 		style = hiddenContainer
-		position = 200, 0
+		position = 0, 0
+        autoWidth = true
 		autoHeight = true
 		alignment = ALIGN_TOP
 		layout = LAYOUT_ABSOLUTE
@@ -128,6 +131,7 @@ form mainMenu {
 			layout = LAYOUT_VERTICAL
 			consumeInputEvents = true
 			zIndex = 20
+            visible = false
 
 			image eye {
 				style = imageWide
@@ -718,6 +722,47 @@ form mainMenu {
 	}
 }
 
+form projectMenu {
+    theme = res/common/default.theme
+    style = basicContainer
+    layout = LAYOUT_VERTICAL
+    zIndex = 50
+    consumeInputEvents = true
+    visible = false
+
+    container header {
+        style = hiddenContainer
+        layout = LAYOUT_ABSOLUTE
+        width = 100%
+        autoSize = AUTO_SIZE_HEIGHT
+        consumeInputEvents = true
+
+        label title {
+            style = noBorder
+            autoSize = AUTO_SIZE_WIDTH
+            height = 50
+            fontSize = 20
+            alignment = ALIGN_HCENTER
+        }
+    }
+
+    container projects {
+        style = hiddenContainer
+        layout = LAYOUT_FLOW
+        width = 100%
+        autoSize = AUTO_SIZE_HEIGHT
+        alignment = ALIGN_TOP
+        consumeInputEvents = true
+
+        button hull {
+            style = buttonStyle
+            autoWidth = true
+            height = 40
+            text = Hull
+        }
+    }
+}
+
 form componentMenu {
 	theme = res/common/default.theme
 	style = basicContainer
@@ -731,6 +776,7 @@ form componentMenu {
 		layout = LAYOUT_ABSOLUTE
 		width = 100%
 		autoSize = AUTO_SIZE_HEIGHT
+        consumeInputEvents = true
 		
 		button back {
 			style = buttonStyle
@@ -752,17 +798,20 @@ form componentMenu {
 		layout = LAYOUT_ABSOLUTE
 		scroll = SCROLL_VERTICAL
 		size = 100%, 80%
+        consumeInputEvents = true
 
 		container instructions {
 			style = basicContainer
 			layout = LAYOUT_ABSOLUTE
 			size = 100%, 100%
+            consumeInputEvents = true
 
 			container navigation {
 				style = hiddenContainer
 				size = 100%, 15%
 				layout = LAYOUT_ABSOLUTE
 				alignment = ALIGN_TOP
+                consumeInputEvents = true
 
 				button prev {
 					style = buttonStyle
@@ -784,6 +833,7 @@ form componentMenu {
 				size = 80%, 80%
 				alignment = ALIGN_BOTTOM_HCENTER
 				layout = LAYOUT_VERTICAL
+                consumeInputEvents = true
 
 				label description {
 					style = noBorder
@@ -799,6 +849,7 @@ form componentMenu {
 			width = 100%
 			autoSize = AUTO_SIZE_HEIGHT
 			alignment = ALIGN_TOP
+            consumeInputEvents = true
 		}
 	}
 	container controls {
@@ -807,6 +858,7 @@ form componentMenu {
 		alignment = ALIGN_BOTTOM_RIGHT
 		autoSize = AUTO_SIZE_WIDTH
 		height = 10%
+        consumeInputEvents = true
 		
 		button componentCancel {
 			style = buttonStyle
@@ -1011,6 +1063,7 @@ form tooltipWrapper {
 	style = hiddenContainer
 	autoSize = AUTO_SIZE_BOTH
 	layout = LAYOUT_FLOW
+    consumeInputEvents = true
 	
 	label tooltip {
 		style = Tooltip

@@ -55,11 +55,17 @@ public:
 	int _constraintId;
 	Vector3 _parentOffset, _parentAxis; //location and axis of constraint joint with parent in parent's model space
 	Vector3 _parentNormal; //normal to parent's surface at joint location
+    //rotation to place the node on its parent node/surface
+    Quaternion _anchorRotation;
 	//if the node has been adjusted so a particular face is on the ground
 	Quaternion _groundRotation;
+    //...or has been manually rotated by the user
+    float _theta, _phi;
+    Quaternion _userRotation;
 	//when moving the node by dragging
 	Vector3 _baseTranslation, _baseScale;
 	Quaternion _baseRotation;
+    float _baseTheta, _basePhi;
 	
 	//if we are part of a project
 	Project *_project;
@@ -123,9 +129,16 @@ public:
 	void setBase();
 	void baseTranslate(const Vector3& delta);
 	void baseRotate(const Quaternion& delta, Vector3 *center = NULL);
+    void baseRotateTheta(float theta);
+    void baseRotatePhi(float phi);
 	void baseScale(const Vector3& delta);
 	void setRest();
 	void placeRest();
+    void setAnchorRotation(Quaternion rot);
+    void setTheta(float theta);
+    void setPhi(float phi);
+    void setUserRotation();
+    void updateRotation();
 
 	bool getTouchPoint(int x, int y, Vector3 *point, Vector3 *normal);
 	short pt2Face(Vector3 point, Vector3 viewer = Vector3::zero());

@@ -219,7 +219,9 @@ bool Rocket::Straw::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int
 				rocket->_strawLength = rocket->_originalStrawLength * scale;
 			}
 		}
+        default: break;
 	}
+    return false;
 }
 
 Rocket::Balloon::Balloon(Project *project, Element *parent)

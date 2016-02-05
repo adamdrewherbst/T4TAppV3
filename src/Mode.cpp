@@ -208,15 +208,12 @@ void Mode::controlEvent(Control *control, Control::Listener::EventType evt) {
 	//if(control != this)
 		app->setNavMode(-1);
 
-	if(_subModePanel && _subModePanel->getControl(id) == control) {
-		cout << "clicked submode " << id << endl;
-		for(short i = 0; i < _subModes.size(); i++) {
-			if(_subModes[i].compare(id) == 0) {
-				cout << "matches " << i << endl;
-				setSubMode(i);
-			}
-		}
-	}
+    for(short i = 0; i < _subModes.size(); i++) {
+        if(_subModes[i].compare(id) == 0) {
+            cout << "matches " << i << endl;
+            setSubMode(i);
+        }
+    }
 }
 
 bool Mode::keyEvent(Keyboard::KeyEvent evt, int key) {
