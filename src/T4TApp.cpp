@@ -54,6 +54,9 @@ void T4TApp::initialize()
 	assert(_font);
 
 	splash("Initializing...");
+    
+    setMultiTouch(true);
+    //registerGesture(Gesture::GESTURE_ANY_SUPPORTED);
 
 #ifdef USE_GLU_TESS
 	Face::initTess();
@@ -264,9 +267,11 @@ void T4TApp::initialize()
 	_edge->_wireframe = true;
 	_edge->_lineWidth = 5.0f;
 	_vertex = duplicateModelNode("sphere");
-	_vertex->setScale(0.15f);
-	_vertex->getModel()->setMaterial("res/common/models.material#colored");
-	_vertex->setColor(1.0f, 0.0f, 0.0f);
+	if(_vertex) {
+		_vertex->setScale(0.15f);
+		_vertex->getModel()->setMaterial("res/common/models.material#colored");
+		_vertex->setColor(1.0f, 0.0f, 0.0f);
+	}
 
     addListener(_mainMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
     addListener(_componentMenu, this, Control::Listener::CLICK | Control::Listener::PRESS | Control::Listener::RELEASE);
@@ -881,6 +886,10 @@ bool T4TApp::mouseEvent(Mouse::MouseEvent evt, int x, int y, int wheelDelta) {
 	return false;
 }
 
+void T4TApp::gesturePinchEvent(int x, int y, float scale) {
+    GP_WARN("pinch %d, %d, %f", x, y, scale);
+}
+
 void T4TApp::inactivateControls(Container *container) {
 	if(container == NULL) container = _mainMenu;
 	std::vector<Control*> controls = container->getControls();
@@ -1011,9 +1020,9 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	filebase += type;
 	filename = filebase + ".node";
 	if(!FileSystem::fileExists(filename.c_str())) {
-        bool obj = loadObj(type);
+        	bool hasObj = loadObj(type);
 #ifdef USE_COLLADA
-		if(!obj) loadDAE(type);
+		if(!hasObj) loadDAE(type);
 #endif
 	}
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-size=600
+size=512
 
 for file in ../png/item_photos/*; do
   if [[ $file == *"_small"* ]]; then continue; fi

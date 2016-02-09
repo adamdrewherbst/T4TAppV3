@@ -81,6 +81,7 @@ void Face::setTransform() {
 
 void Face::updateTransform() {
 	_worldPlane = _plane;
+	if(_worldPlane.getNormal().length() == 0) return;
 	_worldPlane.transform(_mesh->_worldMatrix);
 }
 
@@ -2483,10 +2484,15 @@ void MyNode::updateMaterial(bool recur) {
 	if(light == NULL) return;
 	Model *model = getModel();
 	if(model == NULL) return;
-	Technique *technique = model->getMaterial()->getTechnique();
-	if(technique == NULL) return;
-	technique->getParameter("u_directionalLightColor[0]")->setValue(light->getColor());
-	technique->getParameter("u_directionalLightDirection[0]")->bindValue(lightNode, &Node::getForwardVectorView);
+	unsigned int partCount = model->getMeshPartCount(), n = partCount > 0 ? partCount : 1, i;
+	for(i = 0; i < n; i++) {
+		Technique *technique = model->getMaterial(partCount > 0 ? i : -1)->getTechnique();
+		if(technique == NULL) continue;
+		MaterialParameter *color = technique->getParameter("u_directionalLightColor[0]"),
+			*direction = technique->getParameter("u_directionalLightDirection[0]");
+		color->setValue(light->getColor());
+		direction->bindValue(lightNode, &Node::getForwardVectorView);
+	}
 }
 
 void MyNode::setBase() {

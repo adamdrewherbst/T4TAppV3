@@ -121,6 +121,7 @@ void T4TApp::loadModels() {
 	while((arr = stream->readLine(str, 2048))) {
 		std::istringstream in(arr);
 		in >> modelName >> numTags;
+		if(modelName[0] == '#') continue;
 		std::vector<std::string> tags;
 		for(short i = 0; i < numTags; i++) {
 			in >> tag;
@@ -132,6 +133,7 @@ void T4TApp::loadModels() {
 
 /*void T4TApp::loadModels(const char *filename) {
 	std::unique_ptr<Stream> stream(FileSystem::open(filename));
+    if(!stream) return;
 	stream->rewind();
 
 	char *str, line[2048], *modelFile = (char*)malloc(300*sizeof(char));

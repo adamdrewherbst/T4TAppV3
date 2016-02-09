@@ -5,7 +5,18 @@
 namespace T4T {
 
 HullMode::HullMode() : Mode::Mode("hull", "Hull") {
-	_scene = Scene::load("res/common/scene.gpb");
+	_scene = Scene::load("res/common/game.scene");
+	_camera = _scene->getActiveCamera();
+	_camera->setAspectRatio(app->getAspectRatio());
+	_camera->setNearPlane(1.0f);
+	Node *lightNode = _scene->findNode("lightNode");
+	Light *light = lightNode->getLight();
+	Quaternion lightRot;
+	Quaternion::createFromAxisAngle(Vector3(0, 1, 0), 60 * M_PI/180, &lightRot);
+	lightNode->setRotation(lightRot);
+	light->setColor(0.8f, 0.8f, 0.8f);
+	_camera->getNode()->addChild(lightNode);
+
 	_doSelect = false;
 	_ctrlPressed = false;
 	_shiftPressed = false;
@@ -144,10 +155,11 @@ void HullMode::controlEvent(Control *control, EventType evt) {
 			for(j = 0; j < n; j++) world.transformPoint(&visual->_vertices[j]);
 		}
 		//_hullNode->writeData("res/models/", false);
-		_hullNode->setScale(1, 1, 1);
+		_hullNode->set(Matrix::identity());
 		_scaleText->setText("");
 		_hullNode->uploadData("http://www.t4t.org/nasa-app/models/scripts/save.php");
 		updateModel();
+		updateTransform();
 	}
 }
 
@@ -321,6 +333,7 @@ bool HullMode::selectItem(const char *id) {
 	if(_hullNode->nh() == 1) {
 		_hullNode->clearPhysics();
 	}
+	_hullNode->updateMaterial(true);
 	app->_componentMenu->setVisible(false);
 	return true;
 }
@@ -329,7 +342,7 @@ void HullMode::updateModel() {
 	//use the physical mesh, not the visual mesh, when making hulls
 	Meshy *visual = _hullNode->_visualMesh;
 	_hullNode->_visualMesh = NULL;
-	_hullNode->updateModel(false, false);
+	_hullNode->updateModel(true, false);
 	_hullNode->_visualMesh = visual;
 
 	//add all the triangles again, but with opposite orientation, so the user can click on the backwards ones to reverse them

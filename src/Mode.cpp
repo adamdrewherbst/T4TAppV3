@@ -123,6 +123,7 @@ bool Mode::isSelecting() {
 }
 
 bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex) {
+    //GP_WARN("mode %s touch at %d,%d - index %d", _id.c_str(), x, y, contactIndex);
 	_x = (int)(x /*+ getX() + _container->getX() + app->_stage->getX()*/);
 	_y = (int)(y /*+ getY() + _container->getY() + app->_stage->getY()*/);
 	if(isSelecting()) _touchPt.set(evt, _x, _y, true);

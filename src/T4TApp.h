@@ -375,6 +375,7 @@ public:
     void touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
     void controlEvent(Control* control, Control::Listener::EventType evt);
 	void gestureLongTapEvent(int x, int y, float duration);
+    void gesturePinchEvent(int x, int y, float scale);
     void inactivateControls(Container *container = NULL);
     void collisionEvent(PhysicsCollisionObject::CollisionListener::EventType type,
     	const PhysicsCollisionObject::CollisionPair& pair, const Vector3& pointA, const Vector3& pointB);

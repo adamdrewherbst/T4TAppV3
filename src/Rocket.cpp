@@ -6,13 +6,12 @@ namespace T4T {
 
 Rocket::Rocket() : Project::Project("rocket", "Balloon Rocket") {
 
-	app->addItem("straw", 2, "general", "straw");
 	app->addItem("balloon_sphere", 2, "general", "balloon");
 	app->addItem("balloon_long", 2, "general", "balloon");
-	
+
 	_testState->set(45, 0, M_PI/12);
     _showGround = false;
-	
+
 	_payloadId = "satellite";
 
 	_pathLength = 10;

@@ -6,17 +6,13 @@ namespace T4T {
 
 CEV::CEV() : Project::Project("CEV", "Crew Exploration Vehicle") {
 
-	app->addItem("podBase", 2, "general", "body");
-	app->addItem("hatch1", 2, "general", "hatch");
-	app->addItem("hatch2", 2, "general", "hatch");
-
 	_body = (Body*) addElement(new Body(this));
 	_seat = (Seat*) addElement(new Seat(this, _body));
 	_hatch = (Hatch*) addElement(new Hatch(this, _body));
 	setupMenu();
-    
+
     _showGround = false;
-	
+
 	_maxRadius = 10.0f;
 	_maxLength = 20.0f;
 	_maxMass = 100.0f;
