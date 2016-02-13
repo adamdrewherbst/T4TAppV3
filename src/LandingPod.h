@@ -12,6 +12,7 @@ public:
 		ConstraintPtr _groundAnchor;
 		
 		Body(Project *project);
+        void placeNode(short n);
 	};
 
 	class Hatch : public Project::Element {
@@ -35,9 +36,10 @@ public:
 	LandingPod();
 	bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
 	void controlEvent(Control *control, Control::Listener::EventType evt);
-	void setupMenu();
+    void setupMenu();
 	void setActive(bool active);
 	bool setSubMode(short mode);
+    void setButtons();
 	bool positionPayload();
 	void launch();
 	void update();

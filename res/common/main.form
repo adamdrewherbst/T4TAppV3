@@ -9,7 +9,7 @@ form mainMenu {
 	layout = LAYOUT_ABSOLUTE
 	consumeInputEvents = false
 
-    button menuToggle {
+    button parent_menu {
         style = buttonStyle
         position = 0, 0
         size = 100, 40
@@ -17,7 +17,7 @@ form mainMenu {
     }
 
     //primary menu bar - contains submenu handles
-	container sideMenu {
+	container submenu_menu {
 		style = basicContainer
 		position = 0, 50
 		width = 200
@@ -66,8 +66,9 @@ form mainMenu {
 		style = hiddenContainer
 		autoSize = AUTO_SIZE_BOTH
 		layout = LAYOUT_FLOW
-		alignment = ALIGN_BOTTOM_RIGHT
+		alignment = ALIGN_TOP_RIGHT
         consumeInputEvents = true
+        zIndex = 100
 		
 		button exit {
 			style = buttonStyle
@@ -123,7 +124,31 @@ form mainMenu {
 			size = 60%, 8%
 			alignment = ALIGN_VCENTER_HCENTER
 		}
-		
+
+        container touchMode {
+            style = hiddenContainer
+            alignment = ALIGN_BOTTOM_RIGHT
+            size = 18%, 35%
+            layout = LAYOUT_VERTICAL
+            consumeInputEvents = true
+            zIndex = 100
+
+            image eye {
+                style = imageWide
+                autoWidth = true
+                height = 40%
+                path = res/png/eye.png
+                tooltip = Switch to navigation mode
+            }
+            image hand {
+                style = imageWide
+                autoWidth = true
+                height = 40%
+                path = res/png/hand.png
+                tooltip = Switch to manipulation mode
+            }
+        }
+
 		container camera {
 			style = basicContainer
 			position = 900, 10

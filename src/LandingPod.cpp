@@ -35,12 +35,12 @@ LandingPod::LandingPod() : Project::Project("landingPod", "Landing Pod") {
 }
 
 void LandingPod::setupMenu() {
+    _hatchButton = app->addControl <Button> (NULL, "openHatch", NULL, -1, 40);
+    _hatchButton->setText("Open Hatch");
+    _hatchButton->setEnabled(false);
+    _buttons["hatch"] = _hatchButton;
 	Project::setupMenu();
-	_hatchButton = app->addControl <Button> (NULL, "openHatch", NULL, -1, 40);
-	_hatchButton->setText("Open Hatch");
-	_controls->insertControl(_hatchButton, 2);
-	_hatchButton->setEnabled(false);
-	app->addListener(_hatchButton, this);//*/
+    _controls->addControl(_hatchButton);
 }
 
 bool LandingPod::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex) {
@@ -119,10 +119,15 @@ bool LandingPod::setSubMode(short mode) {
 			break;
 		}
 	}
-	if(changed) _hatchButton->setEnabled(false);
 	_ramp->setVisible(false);
 	_hatching = false;
 	return changed;
+}
+    
+void LandingPod::setButtons() {
+    Project::setButtons();
+    _hatchButton->setVisible(_subMode == 1);
+    _hatchButton->setEnabled(_launchComplete);
 }
 
 bool LandingPod::positionPayload() {
@@ -206,6 +211,12 @@ void LandingPod::openHatch() {
 LandingPod::Body::Body(Project *project) : Project::Element::Element(project, NULL, "body", "Body") {
 	_filter = "body";
 }
+    
+void LandingPod::Body::placeNode(short n) {
+    Project::Element::placeNode(n);
+    MyNode *node = _nodes[n].get();
+    node->setRotation(Vector3::unitX(), -M_PI/2);
+}
 
 LandingPod::Hatch::Hatch(Project *project, Element *parent)
   : Project::Element::Element(project, parent, "hatch", "Hatch") {
@@ -214,7 +225,7 @@ LandingPod::Hatch::Hatch(Project *project, Element *parent)
 
 void LandingPod::Hatch::placeNode(short n) {
 	//put the bottom center of the bounding box where the user clicked
-	MyNode *node = _nodes[n].get(), *parent = _project->getTouchNode();
+    MyNode *node = _nodes[n].get(), *parent = _project->getTouchNode(Touch::TOUCH_RELEASE);
 	node->updateTransform();
 	BoundingBox box = node->getBoundingBox(true);
 	node->shiftModel(0, -box.min.y, 0);
@@ -234,6 +245,7 @@ void LandingPod::Hatch::addPhysics(short n) {
 	MyNode *node = _nodes[n].get(), *parent = _parent->getNode();
 	app->addConstraint(parent, node, -1, "hinge", node->_parentOffset, node->_parentAxis, true, true);
 	//fix the hatch in place until we have landed!
+    _lock.release();
 	_lock = ConstraintPtr(app->addConstraint(parent, node, -1, "fixed", node->_parentOffset, node->_parentAxis, false));
 }
 

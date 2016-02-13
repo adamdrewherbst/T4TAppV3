@@ -231,7 +231,7 @@ public:
     
     //user interface
     Form *_mainMenu, *_projectMenu, *_componentMenu;
-    Container *_sideMenu, *_stage, *_sceneMenu, *_machineMenu,
+    Container *_sideMenu, *_stage, *_touchPanel, *_sceneMenu, *_machineMenu,
       *_textDialog, *_confirmDialog, *_overlay, *_cameraMenu, *_projectContainer, *_componentWrapper, *_componentContainer, *_componentHeader,
       *_componentInstructions;
     MenuFilter *_itemFilter;

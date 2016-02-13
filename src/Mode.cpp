@@ -125,7 +125,9 @@ bool Mode::isSelecting() {
 bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex) {
 	_x = (int)(x /*+ getX() + _container->getX() + app->_stage->getX()*/);
 	_y = (int)(y /*+ getY() + _container->getY() + app->_stage->getY()*/);
-	if(isSelecting()) _touchPt.set(evt, _x, _y, true);
+    if(isSelecting()) {
+        _touchPt.set(evt, _x, _y, true);
+    }
 	else _touchPt.set(evt, _x, _y, _plane);
 	_camera->pickRay(app->getViewport(), _x, _y, &_ray);
 	switch(evt) {
@@ -150,6 +152,7 @@ bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactI
     
 void Mode::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
 {
+    if(app->_componentMenu->isVisible() || app->_projectMenu->isVisible()) return;
     va_list arguments;
     va_start(arguments, y);
     switch(evt) {
@@ -180,9 +183,12 @@ void Mode::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
             if(app->_navMode >= 0) {
                 Vector2 touch = getTouchPix(), delta(x - touch.x, y - touch.y);
                 float radius = _cameraStateBase->radius, theta = _cameraStateBase->theta, phi = _cameraStateBase->phi;
+                GP_WARN("drag delta %f, %f", delta.x, delta.y);
+                GP_WARN("camera from %f, %f, %f", radius, theta, phi);
                 float deltaPhi = delta.y * M_PI / 400.0f, deltaTheta = delta.x * M_PI / 400.0f;
                 phi = fmin(89.9f * M_PI/180, fmax(-89.9f * M_PI/180, phi + deltaPhi));
                 theta += deltaTheta;
+                GP_WARN("to %f, %f, %f", radius, theta, phi);
                 app->setCameraEye(radius, theta, phi);
             }
             break;
@@ -194,7 +200,7 @@ void Mode::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
             float rotation = (float) va_arg(arguments, double), velocity = (float) va_arg(arguments, double);
             if(app->_navMode >= 0) {
                 float theta = _cameraStateBase->theta;
-                app->setCameraTheta(theta + rotation);
+                app->setCameraTheta(theta - rotation);
             }
             break;
         }
@@ -284,6 +290,7 @@ void TouchPoint::set(Touch::TouchEvent evt, int &x, int &y) {
 void TouchPoint::set(Touch::TouchEvent evt, int x, int y, bool getNode) {
 	set(evt, x, y);
 	if(getNode) {
+        _node[evt] = nullptr;
 		Camera *camera = app->getCamera();
 		Ray ray;
 		camera->pickRay(app->getViewport(), x, y, &ray);
