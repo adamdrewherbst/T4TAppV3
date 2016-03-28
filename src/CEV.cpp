@@ -122,7 +122,7 @@ CEV::Seat::Seat(Project *project, Element *parent)
 void CEV::Seat::addPhysics(short n) {
 	Project::Element::addPhysics(n);
 	MyNode *node = _nodes[n].get(),
-		*parent = dynamic_cast<MyNode*>(node->getParent() ? node->getParent() : _project->getTouchNode());
+        *parent = dynamic_cast<MyNode*>(node->getParent() ? node->getParent() : _project->getTouchNode(Touch::TOUCH_RELEASE));
 	PhysicsConstraint *constraint = app->addConstraint(parent, node, node->_constraintId, "fixed",
 		node->_parentOffset, node->_parentAxis, true, true);
 	constraint->setBreakingImpulse(100);

@@ -129,6 +129,7 @@ bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactI
         _touchPt.set(evt, _x, _y, true);
     }
 	else _touchPt.set(evt, _x, _y, _plane);
+    _touchPt._lastEvent = evt;
 	_camera->pickRay(app->getViewport(), _x, _y, &_ray);
 	switch(evt) {
 		case Touch::TOUCH_PRESS: {
@@ -271,6 +272,7 @@ TouchPoint::TouchPoint() {
 }
 
 void TouchPoint::set(Touch::TouchEvent evt, int &x, int &y) {
+    _lastEvent = evt;
 	if(evt == Touch::TOUCH_PRESS) {
 		_touching = true;
 		_offset.set(0, 0);
@@ -284,7 +286,6 @@ void TouchPoint::set(Touch::TouchEvent evt, int &x, int &y) {
 		}
 	}
 	_pix[evt].set(x, y);
-	_lastEvent = evt;
 }
 
 void TouchPoint::set(Touch::TouchEvent evt, int x, int y, bool getNode) {

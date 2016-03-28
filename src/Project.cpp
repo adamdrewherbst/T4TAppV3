@@ -294,7 +294,7 @@ void Project::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
     va_list arguments;
     va_start(arguments, y);
     GP_WARN("gesture %d", evt);
-    switch(evt) {
+    if(_subMode == 0) switch(evt) {
         case Gesture::GESTURE_TAP: {
             GP_WARN("tap in project %s", _id.c_str());
             Mode::gestureEvent(evt, x, y);
@@ -513,6 +513,7 @@ bool Project::setSubMode(short mode) {
 				os << "Click 'Launch' to launch your " << _name;
 				app->message(os.str().c_str());
 			}
+            _launchComplete = false;
 			break;
 		}
 	}
@@ -878,13 +879,12 @@ void Project::Element::addNode() {
 
 void Project::Element::placeNode(short n) {
 	MyNode *node = _nodes[n].get();
-	Vector3 point = _project->getTouchPoint(_project->getLastTouchEvent()),
-	  normal = _project->getTouchNormal(_project->getLastTouchEvent());
+    Vector3 point = _project->getTouchPoint(_project->getLastTouchEvent()),
+        normal = _project->getTouchNormal(_project->getLastTouchEvent());
 	if(isBody()) {
 		node->setTranslation(0, 0, 0);
 	} else {
-		MyNode *parent = _project->getTouchNode(_project->getLastTouchEvent());
-			//_isOther ? _project->getTouchNode(_project->getLastTouchEvent()) : _parent->getNode();
+        MyNode *parent = _project->getTouchNode(_project->getLastTouchEvent());
 		if(parent && parent != node) {
 			cout << "attaching to " << parent->getId() << " at " << app->pv(point) << " [" << app->pv(normal) << "]" << endl;
 			node->attachTo(parent, point, normal);
@@ -975,7 +975,7 @@ bool Project::Element::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned 
     }
     if(step < 0) return false;
 	//move the node as needed
-	switch(_project->_moveMode) {
+	if(_project->_subMode == 0) switch(_project->_moveMode) {
         case 0: //translate in plane
         case 1: //translate over surface
             doTouchStep(_project->_moveMode, step, x, y);
