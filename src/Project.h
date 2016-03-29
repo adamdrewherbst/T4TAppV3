@@ -15,6 +15,7 @@ public:
 		Project *_project;
 		std::string _id, _name;
 		bool _static, _multiple, _isOther, _movable[3], _rotable[3], _complete;
+        Gesture::GestureEvent _currentGesture;
 		float _limits[3][2];
 		short _moveRef, _numNodes, _touchInd;
 		std::vector<std::shared_ptr<MyNode> > _nodes;
@@ -28,6 +29,8 @@ public:
 		CameraState *_attachState;
 		//...and what region it is zooming in on
 		BoundingBox _attachBox;
+        //temp values for free rotation of a node
+        Vector3 _jointBase;
 		
 		Element(Project *project, Element *parent, const char *id, const char *name = NULL, bool multiple = false);
 		void setMovable(bool x, bool y, bool z, short ref = -1);
@@ -41,6 +44,9 @@ public:
 		void setParent(Element *parent);
 		void addChild(Element *child);
 		virtual bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+        virtual void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
+        virtual void setTouchNode(MyNode *node);
+        virtual void doTouchStep(int mode, int step, int x, int y, ...);
 		short getNodeCount();
 		MyNode* getNode(short n = 0);
 		virtual MyNode* getBaseNode(short n = 0);
@@ -113,6 +119,7 @@ public:
 
 	virtual void sync();
 	virtual void setupMenu();
+    void hideButtons();
 	void setActive(bool active);
 	bool setSubMode(short mode);
 	bool selectItem(const char *id);
@@ -125,6 +132,7 @@ public:
 	MyNode* getNode(short n = -1);
 	void controlEvent(Control *control, Control::Listener::EventType evt);
 	bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+    void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
 	void setCurrentElement(short n);
 	void promptNextElement();
 	void setInSequence(bool seq);

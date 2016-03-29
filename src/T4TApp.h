@@ -230,9 +230,9 @@ public:
     int _tmpCount; //number of nodes whose info has been temporarily saved to disk
     
     //user interface
-    Form *_mainMenu, *_componentMenu;
-    Container *_sideMenu, *_stage, *_sceneMenu, *_machineMenu, *_modePanel,
-      *_textDialog, *_confirmDialog, *_overlay, *_cameraMenu, *_componentWrapper, *_componentContainer, *_componentHeader,
+    Form *_mainMenu, *_projectMenu, *_componentMenu;
+    Container *_sideMenu, *_stage, *_sceneMenu, *_machineMenu,
+      *_textDialog, *_confirmDialog, *_overlay, *_cameraMenu, *_projectContainer, *_componentWrapper, *_componentContainer, *_componentHeader,
       *_componentInstructions;
     MenuFilter *_itemFilter;
 	
@@ -348,6 +348,8 @@ public:
     void setCamera(CameraState *state);
     void setCameraEye(float radius, float theta, float phi);
     void setCameraZoom(float radius);
+    void setCameraTheta(float theta);
+    void setCameraPhi(float phi);
     void setCameraTarget(Vector3 target);
     void setCameraNode(MyNode *node);
     void shiftCamera(CameraState *state, unsigned int millis = 1000);
@@ -374,8 +376,12 @@ public:
 	void keyEvent(Keyboard::KeyEvent evt, int key);
     void touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
     void controlEvent(Control* control, Control::Listener::EventType evt);
-	void gestureLongTapEvent(int x, int y, float duration);
-    void gesturePinchEvent(int x, int y, float scale);
+    void gestureTapEvent(int x, int y);
+    void gestureLongTapEvent(int x, int y, float duration);
+    void gesturePinchEvent(int x, int y, float scale, int state);
+    void gestureDragEvent(int x, int y);
+    void gestureDropEvent(int x, int y);
+    void gestureRotateEvent(int x, int y, float rotation, float velocity, int state);
     void inactivateControls(Container *container = NULL);
     void collisionEvent(PhysicsCollisionObject::CollisionListener::EventType type,
     	const PhysicsCollisionObject::CollisionPair& pair, const Vector3& pointA, const Vector3& pointB);

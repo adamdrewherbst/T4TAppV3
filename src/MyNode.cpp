@@ -502,6 +502,7 @@ Vector3 Meshy::getNormal(std::vector<Vector3> &face) {
 		normal.y += (v1.z - v2.z) * (v1.x + v2.x);
 		normal.z += (v1.x - v2.x) * (v1.y + v2.y);
 	}
+    return normal;
 }
 
 void Meshy::copyMesh(Meshy *src) {
@@ -648,6 +649,10 @@ void MyNode::init() {
     _staticObj = false;
     _boundingBox = BoundingBox::empty();
     _groundRotation = Quaternion::identity();
+    _userRotation = Quaternion::identity();
+    _anchorRotation = Quaternion::identity();
+    _theta = 0;
+    _phi = 0;
     _constraintParent = NULL;
     _constraintId = -1;
     _chain = false;
@@ -896,7 +901,8 @@ short MyNode::pt2Face(Vector3 point, Vector3 viewer) {
 }
 
 unsigned int MyNode::pix2Face(int x, int y, Vector3 *point) {
-	unsigned int i, j, k, nf = this->nf(), nt, touchFace = -1;
+    unsigned int i, j, k, nf = this->nf(), nt;
+    int touchFace = -1;
 	Vector3 tri[3], vec, best(0, 0, 1e8);
 	Vector2 tri2[3], pt(x, y), coords;
 	for(i = 0; i < nf; i++) {
@@ -970,8 +976,10 @@ void MyNode::rotateFaceToPlane(unsigned short f, Plane p) {
 	plane.set(-p.getNormal());
 	MyNode *baseNode = inheritsTransform() ? (MyNode*)getParent() : this;
 	baseNode->_groundRotation = getVectorRotation(face, -Vector3::unitZ());
+    baseNode->_userRotation = Quaternion::identity();
 	Quaternion rot = getVectorRotation(-Vector3::unitZ(), plane);
-	baseNode->setMyRotation(rot);
+	baseNode->setAnchorRotation(rot);
+    baseNode->updateRotation();
 	//translate node so it is flush with the plane
 	//if we are joined to a parent, keep the center of the face at the joint
 	if(baseNode->_constraintParent) {
@@ -2389,7 +2397,7 @@ void MyNode::myRotate(const Quaternion& delta, Vector3 *center, short depth) {
 void MyNode::setMyRotation(const Quaternion& rotation, Vector3 *center) {
 	Quaternion rotInv, delta;
 	getRotation().inverse(&rotInv);
-	delta = rotation * _groundRotation * rotInv;
+	delta = rotation * rotInv;
 	Vector3 axis;
 	float angle = delta.toAxisAngle(&axis);
 	//cout << "rotating by " << angle << " about " << app->pv(axis) << " [" << delta.x << "," << delta.y << "," << delta.z << "," << delta.w << "]" << endl;
@@ -2429,6 +2437,11 @@ void MyNode::scaleModel(float scale) {
 		_hulls[i]->scaleModel(scale);
 	}
 }
+    
+void MyNode::setAnchorRotation(Quaternion rot) {
+    _anchorRotation = rot;
+    updateRotation();
+}
 
 Quaternion MyNode::getAttachRotation(const Vector3 &norm) {
 	Quaternion rot;
@@ -2456,7 +2469,7 @@ void MyNode::attachTo(MyNode *parent, const Vector3 &point, const Vector3 &norm)
 	updateTransform();
 	BoundingBox box = getBoundingBox(true, false);
 	Quaternion rot = getAttachRotation(norm);
-	setMyRotation(rot);
+	setAnchorRotation(rot);
 	//flush my bottom with the parent surface
 	Vector3 normal = norm;
 	normal.normalize();
@@ -2502,6 +2515,8 @@ void MyNode::setBase() {
 	Quaternion groundRotInv;
 	_groundRotation.inverse(&groundRotInv);
 	_baseRotation = getRotation() * groundRotInv;
+    _baseTheta = _theta;
+    _basePhi = _phi;
 }
 
 void MyNode::baseTranslate(const Vector3& delta) {
@@ -2510,6 +2525,14 @@ void MyNode::baseTranslate(const Vector3& delta) {
 
 void MyNode::baseRotate(const Quaternion& delta, Vector3 *center) {
 	setMyRotation(delta * _baseRotation, center);
+}
+    
+void MyNode::baseRotateTheta(float theta) {
+    setTheta(_baseTheta + theta);
+}
+
+void MyNode::baseRotatePhi(float phi) {
+    setPhi(_basePhi + phi);
 }
 
 void MyNode::baseScale(const Vector3& delta) {
@@ -2539,6 +2562,33 @@ void MyNode::placeRest() {
 		MyNode *node = dynamic_cast<MyNode*>(n);
 		if(node) node->placeRest();
 	}
+}
+    
+void MyNode::setTheta(float theta) {
+    _theta = theta;
+    setUserRotation();
+}
+    
+void MyNode::setPhi(float phi) {
+    _phi = phi;
+    setUserRotation();
+}
+    
+void MyNode::setUserRotation() {
+    Quaternion theta, phi;
+    Quaternion::createFromAxisAngle(Vector3::unitZ(), _theta, &theta);
+    Quaternion::createFromAxisAngle(Vector3::unitY(), _phi, &phi);
+    _userRotation = theta * phi;
+    updateRotation();
+}
+    
+void MyNode::updateRotation() {
+    Quaternion rot = _anchorRotation * _groundRotation * _userRotation;
+    GP_WARN("setting rotation to %s", app->pq(rot).c_str());
+    GP_WARN("anchor: %s", app->pq(_anchorRotation).c_str());
+    GP_WARN("ground: %s", app->pq(_groundRotation).c_str());
+    GP_WARN("user: %s", app->pq(_userRotation).c_str());
+    setMyRotation(rot);
 }
 
 /*********** PHYSICS ************/

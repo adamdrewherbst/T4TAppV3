@@ -19,6 +19,7 @@ public:
 	std::vector<std::string> _subModes;
 	short _subMode;
 	Container *_container, *_controls, *_subModePanel;
+    std::map<std::string, Button*> _buttons;
 	bool _active, _doSelect;
 	std::ostringstream os;
 
@@ -32,13 +33,13 @@ public:
 	Camera *_cameraBase;
 	CameraState *_cameraStateBase;
 	Rectangle _viewportBase;
-	Vector3 _jointBase; //when free rotating a node, this is the vector from its joint to the touch point
 	
 	Mode(const char* id, const char *name = NULL);
 
 	const char *getId();
 		
 	virtual bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+    virtual void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
 	virtual void controlEvent(Control *control, Control::Listener::EventType evt);
 	virtual bool keyEvent(Keyboard::KeyEvent evt, int key);
 	virtual void setActive(bool active);

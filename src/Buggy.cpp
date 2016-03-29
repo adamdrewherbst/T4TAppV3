@@ -51,6 +51,7 @@ bool Buggy::setSubMode(short mode) {
 			break;
 		}
 	}
+    return changed;
 }
 
 void Buggy::setRampHeight(float scale) {
@@ -70,7 +71,7 @@ void Buggy::setRampHeight(float scale) {
 	trans -= normal * box.min.y;
 	_rootNode->setMyTranslation(trans);
 	Quaternion rot(Vector3::unitX(), atan2(scale * 5.0f, 15.0f));
-	_rootNode->setMyRotation(rot);
+	_rootNode->setAnchorRotation(rot);
 }
 
 void Buggy::launch() {
@@ -129,7 +130,7 @@ void Buggy::Axle::placeNode(short n) {
 	Vector3 point = _project->getTouchPoint(_project->getLastTouchEvent());
 	//z-axis of the cylinder should be along the buggy's x-axis
 	Quaternion rot(Vector3::unitY(), M_PI/2);
-	_nodes[n]->setMyRotation(rot);
+	_nodes[n]->setAnchorRotation(rot);
 	point.x = 0;
 	_nodes[n]->setMyTranslation(point);
 }
@@ -187,7 +188,7 @@ void Buggy::Wheels::placeNode(short n) {
 	float dir = n == 0 ? 1 : -1;
 	Vector3 parent = _parent->getNode()->getTranslationWorld();
 	Quaternion rot(Vector3::unitY(), dir * M_PI/2);
-	_nodes[n]->setMyRotation(rot);
+	_nodes[n]->setAnchorRotation(rot);
 	Vector3 trans(dir * point.x, parent.y, parent.z);
 	_nodes[n]->setMyTranslation(trans);
 }
@@ -211,6 +212,7 @@ bool Buggy::Wheels::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int
 	} else {
 		Project::Element::touchEvent(evt, x, y, contactIndex);
 	}
+    return false;
 }
 
 }

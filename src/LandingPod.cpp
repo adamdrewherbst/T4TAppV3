@@ -145,7 +145,7 @@ bool LandingPod::positionPayload() {
 	Quaternion::createFromAxisAngle(Vector3::unitY(), angleXZ, &rot2);
 	rot = rot2 * rot1;
 	cout << "rotating z-axis to " << app->pv(-normal) << " => " << app->pq(rot) << endl;
-	_payload->setMyRotation(rot);
+	_payload->setAnchorRotation(rot);
 	_scene->addNode(_payload);
 	_payload->updateMaterial();
 	return true;
