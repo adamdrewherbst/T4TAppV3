@@ -119,7 +119,7 @@ void Buggy::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...) {
             Project::gestureEvent(evt, x, y);
             break;
         case Gesture::GESTURE_DRAG:
-            if(_subMode == 1 && !_launching && getTouchNode(Touch::TOUCH_RELEASE) == _ramp) {
+            if(_subMode == 1 && !_launching && getTouchNode() == _ramp) {
                 _touchPt.set(Touch::TOUCH_MOVE, x, y);
                 float scale = _ramp->_baseScale.y - _touchPt.deltaPix().y / 200.0f;
                 GP_WARN("Scaling ramp from %f to %f", _ramp->_baseScale.y, scale);

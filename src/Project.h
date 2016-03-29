@@ -14,6 +14,7 @@ public:
 		T4TApp *app;
 		Project *_project;
 		std::string _id, _name;
+        int _index;
 		bool _static, _multiple, _isOther, _movable[3], _rotable[3], _complete;
         Gesture::GestureEvent _currentGesture;
 		float _limits[3][2];
@@ -130,6 +131,7 @@ public:
 	Element* addElement(Element *element);
 	Element* getEl(short n = -1);
 	Element* getElement(const char *id);
+    Element* getUnfinishedEl();
 	MyNode* getNode(short n = -1);
 	void controlEvent(Control *control, Control::Listener::EventType evt);
 	bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);

@@ -943,10 +943,6 @@ bool T4TApp::mouseEvent(Mouse::MouseEvent evt, int x, int y, int wheelDelta) {
 	return false;
 }
 
-void T4TApp::gesturePinchEvent(int x, int y, float scale) {
-    GP_WARN("pinch %d, %d, %f", x, y, scale);
-}
-
 void T4TApp::inactivateControls(Container *container) {
 	if(container == NULL) container = _mainMenu;
 	std::vector<Control*> controls = container->getControls();
@@ -1096,13 +1092,14 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	std::string imageFile = "res/png/item_photos/";
 	imageFile += type;
 	imageFile += "_small.png";
+    float imageSize = 400.0f;
 	if(FileSystem::fileExists(imageFile.c_str())) {
-		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
+		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, imageSize, imageSize);
 		itemImage->setImage(imageFile.c_str());
 		itemImage->setZIndex(_componentMenu->getZIndex());
         itemImage->setConsumeInputEvents(true);
 	} else {
-		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 150.0f, 150.0f);
+		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, imageSize, imageSize);
 		itemImage->setText(type);
 		itemImage->setZIndex(_componentMenu->getZIndex());
         itemImage->setConsumeInputEvents(true);
@@ -2253,7 +2250,7 @@ ImageButton::ImageButton(const char *id, const char *path, const char *text, con
 	_text = Label::create(MyNode::concat(2, id, "_text"), app->_noBorderStyle);
 	if(text) _text->setText(text);
 	_text->setAutoSize(Control::AUTO_SIZE_WIDTH);
-	_text->setHeight(40.0f);
+	_text->setHeight(100.0f);
 	setTextAlignment(Control::ALIGN_VCENTER_LEFT);
 	_text->setConsumeInputEvents(false);
 	_container->addControl(_text);

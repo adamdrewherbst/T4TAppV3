@@ -55,7 +55,8 @@ Project::Project(const char* id, const char *name) : Mode::Mode(id, name) {
 		title = "Crew Exp. Veh.";
 	}
 	ImageButton *button = ImageButton::create(_id.c_str(), os.str().c_str(), title);
-    button->_container->setSize(150.0f, 150.0f);
+    float buttonSize = 400.0f;
+    button->_container->setSize(buttonSize, buttonSize);
     button->setImageSize(0.7f, 0.7f, true, Control::ALIGN_TOP_HCENTER);
     button->setTextAlignment(Control::ALIGN_BOTTOM_HCENTER);
 	app->_projectContainer->addControl(button->_container);
@@ -107,32 +108,34 @@ void Project::setupMenu() {
     _controls->setAlignment(Control::ALIGN_HCENTER);
     _controls->setY(0.75f, true);
 	_controls->setZIndex(zIndex);
+    
+    int buttonHeight = 100;
 
     //add a launch button
-    _launchButton = app->addControl <Button> (_controls, "launch", NULL, -1, 40);
+    _launchButton = app->addControl <Button> (_controls, "launch", NULL, -1, buttonHeight);
     _launchButton->setText("Launch!");
     _buttons["launch"] = _launchButton;
     
-    Button *button = app->addControl <Button> (_controls, "reset", NULL, -1, 40);
+    Button *button = app->addControl <Button> (_controls, "reset", NULL, -1, buttonHeight);
     button->setText("Reset");
     _buttons["reset"] = button;
     
-	button = app->addControl <Button> (_controls, "build", NULL, -1, 40);
+	button = app->addControl <Button> (_controls, "build", NULL, -1, buttonHeight);
 	button->setText("Build");
     _buttons["build"] = button;
-	button = app->addControl <Button> (_controls, "test", NULL, -1, 40);
+	button = app->addControl <Button> (_controls, "test", NULL, -1, buttonHeight);
 	button->setText("Test It!");
     _buttons["test"] = button;
 
 	//add a button for each element to choose its item and edit it
 	short i, j, n;
 	for(i = 1; i < _numElements; i++) {
-		button = app->addControl <Button> (_controls, _elements[i]->_id.c_str(), NULL, -1, 40);
+		button = app->addControl <Button> (_controls, _elements[i]->_id.c_str(), NULL, -1, buttonHeight);
         button->setText(MyNode::concat(2, i == 0 ? "Choose " : "Add ", _elements[i]->_name.c_str()));
         _buttons[_elements[i]->_id] = button;
 	}
     
-    button = app->addControl <Button> (_controls, "other", NULL, -1, 40);
+    button = app->addControl <Button> (_controls, "other", NULL, -1, buttonHeight);
     button->setText("Add Other Item");
     _buttons["other"] = button;
     
@@ -210,7 +213,8 @@ void Project::controlEvent(Control *control, Control::Listener::EventType evt) {
     GP_WARN("project control %s", id);
     Element *element = getEl();
 
-    if(getEl() && strcmp(id, getEl()->_id.c_str()) == 0) {
+    if(getUnfinishedEl() && strcmp(id, getUnfinishedEl()->_id.c_str()) == 0) {
+        setCurrentElement(getUnfinishedEl()->_index);
         promptItem();
     } else if(strcmp(id, "other") == 0) {
         _choosingOther = true;
@@ -294,7 +298,7 @@ void Project::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
     va_list arguments;
     va_start(arguments, y);
     GP_WARN("gesture %d", evt);
-    if(_subMode == 0) switch(evt) {
+    if(_subMode < 3) switch(evt) {
         case Gesture::GESTURE_TAP: {
             GP_WARN("tap in project %s", _id.c_str());
             Mode::gestureEvent(evt, x, y);
@@ -385,6 +389,13 @@ Project::Element* Project::getElement(const char *id) {
 	for(i = 0; i < n; i++) if(_elements[i]->_id.compare(id) == 0) return _elements[i].get();
 	return NULL;
 }
+    
+Project::Element* Project::getUnfinishedEl() {
+    short e;
+    for(e = 1; e < _numElements && _elements[e]->getNode(); e++);
+    if(e < _numElements) return _elements[e].get();
+    return NULL;
+}
 
 MyNode* Project::getNode(short n) {
     if(n < 0) n = _choosingOther ? 0 : _currentElement;
@@ -423,6 +434,7 @@ void Project::finish() {
 }
 
 Project::Element* Project::addElement(Element *element) {
+    element->_index = _elements.size();
 	_elements.push_back(std::shared_ptr<Element>(element));
 	return element;
 }
@@ -456,9 +468,8 @@ void Project::setActive(bool active) {
 			showInstructions();
 			_started = true;
 		} else {
-			short e;
-			for(e = 1; e < _numElements && _elements[e]->getNode(); e++);
-            setCurrentElement(e-1);
+            Element *el = getUnfinishedEl();
+            setCurrentElement(el ? el->_index : _numElements);
 		}
 	} else {
 		removePayload();
@@ -561,18 +572,16 @@ void Project::navigateInstructions(bool forward) {
 void Project::setButtons() {
     hideButtons();
     switch(_subMode) {
-        case 0:
-            if(_currentElement >= 0) {
-                if(!getEl()->_complete) {
-                    Element *element = getEl();
-                    Button *button = _buttons[element->_id];
-                    if(button && !element->_complete) button->setVisible(true);
-                    if(!_inSequence || !element->isBody()) _buttons["other"]->setVisible(true);
-                } else {
-                    _buttons["other"]->setVisible(true);
-                    _buttons["test"]->setVisible(true);
-                }
-                    
+        case 0: {
+            Element *element = getUnfinishedEl();
+            if(element) {
+                Button *button = _buttons[element->_id];
+                if(button) button->setVisible(true);
+                if(!_inSequence || !element->isBody()) _buttons["other"]->setVisible(true);
+            } else {
+                _buttons["other"]->setVisible(true);
+                _buttons["test"]->setVisible(true);
+                
                 /*std::vector<std::string> &actions = element->_actions, &excludedMoves = element->_excludedMoves;
                  _actionFilter->filterAll(true);
                  short n = actions.size(), i;
@@ -600,6 +609,7 @@ void Project::setButtons() {
                  }//*/
             }
             break;
+        }
         case 1:
             if(_launchComplete) {
                 _buttons["reset"]->setVisible(true);

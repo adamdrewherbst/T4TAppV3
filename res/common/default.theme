@@ -12,7 +12,7 @@ theme mainMenu
     ${focusColor} = ${normalColor}
     ${textColor} = #ffffffff
     ${font} = fonts/arial-distance.gpb
-    ${fontSize} = 16
+    ${fontSize} = 40
     ${disabledOpacity} = 0.5
 
     /////////////////////////////////////////////////////////////////////
@@ -281,7 +281,7 @@ theme mainMenu
 
             font = ${font}
             textColor = #ffffffff
-            fontSize = 18
+            fontSize = ${fontSize}
             textAlignment = ALIGN_VCENTER_HCENTER
         }
 
@@ -559,7 +559,7 @@ theme mainMenu
 
             font = ${font}
             textColor = #ffffffff
-            fontSize = 18
+            fontSize = ${fontSize}
             textAlignment = ALIGN_VCENTER_HCENTER
         }
 	}
@@ -571,7 +571,7 @@ theme mainMenu
             imageList = normalImages
             font = ${font}
             textColor = #ffffffff
-            fontSize = 18
+            fontSize = ${fontSize}
             textAlignment = ALIGN_VCENTER_HCENTER
         }
 		
