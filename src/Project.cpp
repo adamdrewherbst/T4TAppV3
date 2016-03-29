@@ -34,7 +34,8 @@ Project::Project(const char* id, const char *name) : Mode::Mode(id, name) {
 	_buildState = new CameraState(30, -M_PI/3, M_PI/12);
 	_testState = new CameraState(40, 0, M_PI/12);	
 
-	_other = (Other*) addElement(new Other(this));	
+    _other = (Other*) addElement(new Other(this));
+    _choosingOther = false;
 
 	_currentElement = 0;
 	_instructionsPage = 0;
@@ -97,8 +98,9 @@ void Project::setupMenu() {
     _container->setWidth(1.0f, true);
     _container->setHeight(1.0f, true);
 	_container->setLayout(Layout::LAYOUT_ABSOLUTE);
+    _container->setConsumeInputEvents(false);
 
-	_controls = app->addControl <Container> (_container, "controls", "basicContainer", -1, -1);
+	_controls = app->addControl <Container> (_container, "controls", "hiddenContainer", -1, -1);
 	_controls->setLayout(Layout::LAYOUT_FLOW);
 	_controls->setConsumeInputEvents(true);
     _controls->setAutoSize(Control::AUTO_SIZE_BOTH);
@@ -138,6 +140,8 @@ void Project::setupMenu() {
     for(std::map<std::string, Button*>::iterator it = _buttons.begin(); it != _buttons.end(); it++) {
         button = it->second;
         button->setAutoSize(Control::AUTO_SIZE_WIDTH);
+        button->setAlignment(Control::ALIGN_HCENTER);
+        button->setMargin(0, 10.0f, 0, 0);
         button->setZIndex(zIndex);
     }
     
@@ -203,13 +207,13 @@ void Project::hideButtons() {
 void Project::controlEvent(Control *control, Control::Listener::EventType evt) {
 	Mode::controlEvent(control, evt);
 	const char *id = control->getId();
-	cout << "project control " << id << endl;
-	Element *element = getEl();
+    GP_WARN("project control %s", id);
+    Element *element = getEl();
 
     if(getEl() && strcmp(id, getEl()->_id.c_str()) == 0) {
         promptItem();
     } else if(strcmp(id, "other") == 0) {
-        _currentElement = 0;
+        _choosingOther = true;
         promptItem();
     /*} else if(_numActions > 0 && _actionContainer->getControl(id) == control) {
 		if(element) element->doAction(id);
@@ -217,6 +221,8 @@ void Project::controlEvent(Control *control, Control::Listener::EventType evt) {
     //*/
 	} else if(control == _launchButton) {
 		launch();
+    } else if(control == _buttons["reset"]) {
+        setSubMode(1);
 	} else if(control == _activateButton) {
 		activate();
 	} else if(strcmp(id, "save") == 0) {
@@ -228,7 +234,7 @@ bool Project::selectItem(const char *id) {
 	Element *element = getEl();
 	if(element) element->setNode(id);
 	else _currentNodeId = id;
-	return true;
+    return true;
 }
 
 void Project::highlightNode(MyNode *node, bool select) {
@@ -284,10 +290,11 @@ bool Project::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int conta
     
 void Project::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
 {
+    if(app->_componentMenu->isVisible() || app->_projectMenu->isVisible()) return;
     va_list arguments;
     va_start(arguments, y);
     GP_WARN("gesture %d", evt);
-    switch(evt) {
+    if(_subMode == 0) switch(evt) {
         case Gesture::GESTURE_TAP: {
             GP_WARN("tap in project %s", _id.c_str());
             Mode::gestureEvent(evt, x, y);
@@ -368,7 +375,7 @@ void Project::deleteSelected() {
 }
 
 Project::Element* Project::getEl(short n) {
-	if(n < 0) n = _currentElement;
+    if(n < 0) n = _choosingOther ? 0 : _currentElement;
 	if(n > _elements.size()) return NULL;
 	return _elements[n].get();
 }
@@ -380,7 +387,7 @@ Project::Element* Project::getElement(const char *id) {
 }
 
 MyNode* Project::getNode(short n) {
-	if(n < 0) n = _currentElement;
+    if(n < 0) n = _choosingOther ? 0 : _currentElement;
 	if(_elements[n]->_nodes.empty()) return NULL;
 	return _elements[n]->_nodes.back().get();
 }
@@ -400,14 +407,16 @@ void Project::addNode() {
 
 void Project::finish() {
 	for(short i = 0; i < _elements.size(); i++) {
-		MyNode *node = getNode(i);
-		if(_elements[i]->_static) { //we didn't make it static before now, to allow user to adjust position
-			node->removePhysics();
-			node->setStatic(true);
-			node->addPhysics();
-		} else { //add gravity to this node
-			((PhysicsRigidBody*)node->getCollisionObject())->setGravity(app->getPhysicsController()->getGravity());
-		}
+        for(short j = 0; j < _elements[i]->getNodeCount(); j++) {
+		MyNode *node = _elements[i]->getNode(j);
+            if(_elements[i]->_static) { //we didn't make it static before now, to allow user to adjust position
+                node->removePhysics();
+                node->setStatic(true);
+                node->addPhysics();
+            } else { //add gravity to this node
+                ((PhysicsRigidBody*)node->getCollisionObject())->setGravity(app->getPhysicsController()->getGravity());
+            }
+        }
 	}
 	app->_scene->addNode(_rootNode);
 	setActive(false);
@@ -441,6 +450,7 @@ void Project::setActive(bool active) {
 		app->getPhysicsController()->setGravity(Vector3::zero());
 		app->getPhysicsController()->addStatusListener(this);
 		setInSequence(true);
+        _choosingOther = false;
 		//determine the next element needing to be added
 		if(!_started) {
 			showInstructions();
@@ -450,7 +460,7 @@ void Project::setActive(bool active) {
 			for(e = 1; e < _numElements && _elements[e]->getNode(); e++);
             setCurrentElement(e-1);
 		}
-	}else {
+	} else {
 		removePayload();
 		if(_buildAnchor.get() != nullptr) _buildAnchor->setEnabled(false);
 		if(_subMode == 0) _rootNode->setRest();
@@ -481,6 +491,7 @@ bool Project::setSubMode(short mode) {
 		if(changed) {
 			_rootNode->setRest();
 			setSelectedNode(NULL);
+            //determine which element we are currently working on
 		}
 	} else _rootNode->placeRest();
 	if(_buildAnchor.get() != nullptr) _buildAnchor->setEnabled(_subMode == 0);
@@ -502,9 +513,11 @@ bool Project::setSubMode(short mode) {
 				os << "Click 'Launch' to launch your " << _name;
 				app->message(os.str().c_str());
 			}
+            _launchComplete = false;
 			break;
 		}
 	}
+    setButtons();
 	_launchButton->setEnabled(_subMode == 1);
 	_launching = false;
 	_launchComplete = false;
@@ -514,39 +527,7 @@ bool Project::setSubMode(short mode) {
 
 void Project::setCurrentElement(short n) {
 	_currentElement = n;
-    hideButtons();
-	if(_currentElement >= 0) {
-		Element *element = getEl();
-        Button *button = _buttons[element->_id];
-        if(button) button->setVisible(true);
-        if(!element->isBody()) _buttons["other"]->setVisible(true);
-        
-		/*std::vector<std::string> &actions = element->_actions, &excludedMoves = element->_excludedMoves;
-		_actionFilter->filterAll(true);
-		short n = actions.size(), i;
-		for(i = 0; i < n; i++) {
-			_actionFilter->filter(actions[i].c_str(), false);
-		}
-		_moveFilter->filterAll(false);
-		n = excludedMoves.size();
-		for(i = 0; i < n; i++) {
-			_moveFilter->filter(excludedMoves[i].c_str(), true);
-		}
-		//update button tooltips to use the name of this element
-		std::vector<Control*> controls = _actionContainer->getControls();
-		n = controls.size();
-		for(i = 0; i < n; i++) {
-			const char *id = controls[i]->getId();
-			std::ostringstream os;
-			if(strcmp(id, "add") == 0) {
-				os << "Add another " << element->_name;
-				controls[i]->setTooltip(os.str().c_str());
-			} else if(strcmp(id, "delete") == 0) {
-				os << "Delete the " << element->_name;
-				controls[i]->setTooltip(os.str().c_str());
-			}
-		}//*/
-	}
+    setButtons();
 }
 
 void Project::showInstructions() {
@@ -576,17 +557,72 @@ void Project::navigateInstructions(bool forward) {
 		app->_componentWrapper->setEnabled(true);
 	}
 }
+    
+void Project::setButtons() {
+    hideButtons();
+    switch(_subMode) {
+        case 0:
+            if(_currentElement >= 0) {
+                if(!getEl()->_complete) {
+                    Element *element = getEl();
+                    Button *button = _buttons[element->_id];
+                    if(button && !element->_complete) button->setVisible(true);
+                    if(!_inSequence || !element->isBody()) _buttons["other"]->setVisible(true);
+                } else {
+                    _buttons["other"]->setVisible(true);
+                    _buttons["test"]->setVisible(true);
+                }
+                    
+                /*std::vector<std::string> &actions = element->_actions, &excludedMoves = element->_excludedMoves;
+                 _actionFilter->filterAll(true);
+                 short n = actions.size(), i;
+                 for(i = 0; i < n; i++) {
+                 _actionFilter->filter(actions[i].c_str(), false);
+                 }
+                 _moveFilter->filterAll(false);
+                 n = excludedMoves.size();
+                 for(i = 0; i < n; i++) {
+                 _moveFilter->filter(excludedMoves[i].c_str(), true);
+                 }
+                 //update button tooltips to use the name of this element
+                 std::vector<Control*> controls = _actionContainer->getControls();
+                 n = controls.size();
+                 for(i = 0; i < n; i++) {
+                 const char *id = controls[i]->getId();
+                 std::ostringstream os;
+                 if(strcmp(id, "add") == 0) {
+                 os << "Add another " << element->_name;
+                 controls[i]->setTooltip(os.str().c_str());
+                 } else if(strcmp(id, "delete") == 0) {
+                 os << "Delete the " << element->_name;
+                 controls[i]->setTooltip(os.str().c_str());
+                 }
+                 }//*/
+            }
+            break;
+        case 1:
+            if(_launchComplete) {
+                _buttons["reset"]->setVisible(true);
+                _buttons["build"]->setVisible(true);
+            } else {
+                _buttons["launch"]->setVisible(true);
+                _buttons["build"]->setVisible(true);
+            }
+            break;
+        default: break;
+    }
+}
 
 void Project::promptNextElement() {
-	if(_currentElement < (short)_elements.size()-1) {
-		setCurrentElement(_currentElement+1);
+    short newCurrent = _choosingOther ? _currentElement : _currentElement+1;
+    _choosingOther = false;
+    if(newCurrent < (short)_elements.size()) {
+		setCurrentElement(newCurrent);
 		_moveMode = -1;
 	}
     else {
         setInSequence(false);
-        hideButtons();
-        _buttons["test"]->setVisible(true);
-        _buttons["other"]->setVisible(true);
+        setButtons();
     }
 	if(!_inSequence) return;
 	//promptItem();
@@ -631,6 +667,7 @@ void Project::statusEvent(PhysicsController::Listener::EventType type) {
 
 void Project::launchComplete() {
 	_launchComplete = true;
+    setButtons();
 	if(!app->hasMessage() && !_broken) {
 		std::ostringstream os;
 		os << "Your " << _id << " survived!";
@@ -842,13 +879,12 @@ void Project::Element::addNode() {
 
 void Project::Element::placeNode(short n) {
 	MyNode *node = _nodes[n].get();
-	Vector3 point = _project->getTouchPoint(_project->getLastTouchEvent()),
-	  normal = _project->getTouchNormal(_project->getLastTouchEvent());
+    Vector3 point = _project->getTouchPoint(_project->getLastTouchEvent()),
+        normal = _project->getTouchNormal(_project->getLastTouchEvent());
 	if(isBody()) {
 		node->setTranslation(0, 0, 0);
 	} else {
-		MyNode *parent = _project->getTouchNode(_project->getLastTouchEvent());
-			//_isOther ? _project->getTouchNode(_project->getLastTouchEvent()) : _parent->getNode();
+        MyNode *parent = _project->getTouchNode(_project->getLastTouchEvent());
 		if(parent && parent != node) {
 			cout << "attaching to " << parent->getId() << " at " << app->pv(point) << " [" << app->pv(normal) << "]" << endl;
 			node->attachTo(parent, point, normal);
@@ -939,7 +975,7 @@ bool Project::Element::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned 
     }
     if(step < 0) return false;
 	//move the node as needed
-	switch(_project->_moveMode) {
+	if(_project->_subMode == 0) switch(_project->_moveMode) {
         case 0: //translate in plane
         case 1: //translate over surface
             doTouchStep(_project->_moveMode, step, x, y);
@@ -1062,7 +1098,7 @@ void Project::Element::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...
         case Gesture::GESTURE_ROTATE: {
             float rotation = (float) va_arg(args, double), velocity = (float) va_arg(args, double);
             int state = (int) va_arg(args, long);
-            doTouchStep(2, state, x, y, rotation);
+            doTouchStep(2, state, x, y, -rotation);
             break;
         }
         default: break;
@@ -1248,7 +1284,7 @@ Project::Other::Other(Project *project) : Project::Element::Element(project, NUL
 void Project::Other::addPhysics(short n) {
 	Project::Element::addPhysics(n);
 	MyNode *node = _nodes[n].get(), *parent = dynamic_cast<MyNode*>(node->getParent());
-	if(!parent) parent = _project->getTouchNode();
+    if(!parent) parent = _project->getTouchNode(Touch::TOUCH_RELEASE);
 	app->addConstraint(parent, node, node->_constraintId, "fixed", node->_parentOffset, node->_parentAxis, true, true);
 }
 

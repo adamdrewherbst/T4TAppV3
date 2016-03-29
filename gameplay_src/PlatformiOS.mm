@@ -109,6 +109,7 @@ int getUnicode(int key);
     UILongPressGestureRecognizer *_longPressRecognizer;
     UILongPressGestureRecognizer *_longTapRecognizer;
     UILongPressGestureRecognizer *_dragAndDropRecognizer;
+    UIRotationGestureRecognizer *_rotateRecognizer;
 }
 
 @property (readonly, nonatomic, getter=isUpdating) BOOL updating;
@@ -664,6 +665,8 @@ int getUnicode(int key);
         case Gesture::GESTURE_DRAG:
         case Gesture::GESTURE_DROP:
             return (_dragAndDropRecognizer != NULL);
+        case Gesture::GESTURE_ROTATE:
+            return (_rotateRecognizer != NULL);
         default:
             break;
     }
@@ -728,6 +731,10 @@ int getUnicode(int key);
         }
         _dragAndDropRecognizer = _longPressRecognizer;
     }
+    if ((evt & Gesture::GESTURE_ROTATE) == Gesture::GESTURE_ROTATE && _rotateRecognizer == NULL) {
+        _rotateRecognizer = [[UIRotationGestureRecognizer alloc] initWithTarget:self action:@selector(handleRotateGesture:)];
+        [self addGestureRecognizer:_rotateRecognizer];
+    }
 }
 
 - (void)unregisterGesture: (Gesture::GestureEvent) evt
@@ -768,6 +775,11 @@ int getUnicode(int key);
         }
         _dragAndDropRecognizer = NULL;
     }
+    if((evt & Gesture::GESTURE_ROTATE) == Gesture::GESTURE_ROTATE && _rotateRecognizer != NULL) {
+        [self removeGestureRecognizer:_rotateRecognizer];
+        [_rotateRecognizer release];
+        _rotateRecognizer = NULL;
+    }
 }
 
 - (void)handleTapGesture:(UITapGestureRecognizer*)sender
@@ -801,7 +813,17 @@ int getUnicode(int key);
 {
     CGFloat factor = [sender scale];
     CGPoint location = [sender locationInView:self];
-    gameplay::Platform::gesturePinchEventInternal(location.x * WINDOW_SCALE, location.y * WINDOW_SCALE, factor);
+    NSInteger state = [sender state];
+    gameplay::Platform::gesturePinchEventInternal(location.x * WINDOW_SCALE, location.y * WINDOW_SCALE, factor, state);
+}
+
+- (void)handleRotateGesture:(UIRotationGestureRecognizer*)sender
+{
+    CGFloat rotation = [sender rotation];
+    CGFloat velocity = [sender velocity];
+    CGPoint location = [sender locationInView:self];
+    NSInteger state = [sender state];
+    gameplay::Platform::gestureRotateEventInternal(location.x * WINDOW_SCALE, location.y * WINDOW_SCALE, rotation, velocity, state);
 }
 
 - (void)handleSwipeGesture:(UISwipeGestureRecognizer*)sender

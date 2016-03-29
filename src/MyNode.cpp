@@ -651,6 +651,9 @@ void MyNode::init() {
     _groundRotation = Quaternion::identity();
     _userRotation = Quaternion::identity();
     _anchorRotation = Quaternion::identity();
+    _baseScale = Vector3::one();
+    _baseRotation = Quaternion::identity();
+    _baseTranslation = Vector3::zero();
     _theta = 0;
     _phi = 0;
     _constraintParent = NULL;

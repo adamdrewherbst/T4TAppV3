@@ -74,6 +74,7 @@ public:
 	
 	std::vector<std::shared_ptr<Element> > _elements;
 	Other *_other;
+    bool _choosingOther;
 	
 	std::vector<std::string> _moveModes;
 	Container *_moveContainer;
@@ -134,6 +135,7 @@ public:
 	bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
     void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
 	void setCurrentElement(short n);
+    virtual void setButtons();
 	void promptNextElement();
 	void setInSequence(bool seq);
 	void promptItem();

@@ -116,8 +116,9 @@ void T4TApp::initialize()
 
 	//root menu node for finding controls by ID
 	_mainMenu = Form::create("res/common/main.form#mainMenu");
-	_sideMenu = (Container*)_mainMenu->getControl("sideMenu");
+	_sideMenu = (Container*)_mainMenu->getControl("submenu_menu");
 	_stage = (Container*)_mainMenu->getControl("stage");
+    _touchPanel = (Container*)_mainMenu->getControl("touchMode");
 	_sceneMenu = (Container*)_mainMenu->getControl("submenu_sceneMenu");
 	_machineMenu = (Container*)_mainMenu->getControl("submenu_machineMenu");
 	_cameraMenu = (Container*)_stage->getControl("camera");
@@ -128,6 +129,11 @@ void T4TApp::initialize()
     
     _projectMenu = Form::create("res/common/main.form#projectMenu");
     _projectContainer = (Container*) _projectMenu->getControl("projects");
+    
+    ButtonGroup *touchGroup = ButtonGroup::create("touch");
+    Control *nav = _touchPanel->getControl("eye"), *man = _touchPanel->getControl("hand");
+    touchGroup->addButton(nav);
+    touchGroup->addButton(man);
 
 	//make a button group for the navigation modes
 	ButtonGroup *eyeGroup = ButtonGroup::create("eye"), *navGroup = ButtonGroup::create("navModes");
@@ -644,13 +650,15 @@ void T4TApp::setMode(short mode) {
 
 void T4TApp::setNavMode(short mode) {
 	_navMode = mode;
-	ButtonGroup *eye = ButtonGroup::getGroup("eye"), *modes = ButtonGroup::getGroup("navModes");
+    ButtonGroup *eye = ButtonGroup::getGroup("eye"), *modes = ButtonGroup::getGroup("navModes"), *touch = ButtonGroup::getGroup("touch");
 	if(eye) eye->toggleButton("eye", _navMode >= 0);
 	if(modes) switch(_navMode) {
-		case 0: modes->setActive("rotate"); break;
+        case 0: modes->setActive("rotate"); break;
 		case 1: modes->setActive("translate"); break;
 		case 2: modes->setActive("zoom"); break;
 	}
+    if(mode >= 0) touch->setActive("eye");
+    else touch->setActive("hand");
 }
 
 void T4TApp::gestureTapEvent(int x, int y)
@@ -696,9 +704,12 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 		_touchControl = NULL;
 		setTooltip();
 	}
+    
+    const char *action = evt == Control::Listener::PRESS ? "PRESSED " : evt == Control::Listener::RELEASE ? "RELEASED " : "CLICKED ";
+    cout << action << id << endl;
 
 	if(evt == Control::Listener::PRESS || evt == Control::Listener::RELEASE) return;
-	cout << "CLICKED " << id << endl;
+	//cout << "CLICKED " << id << endl;
 
 	//if this button is part of a group, make it the active one
 	ButtonGroup *group = ButtonGroup::getGroup(control);
@@ -712,13 +723,8 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 		return;
 	}
     
-    //toggle the main menu
-    if(strcmp(id, "menuToggle") == 0) {
-        _sideMenu->setVisible(!_sideMenu->isVisible());
-    }
-
 	//login/register
-	else if(control == _login) {
+	if(control == _login) {
 		if(strcmp(_login->getText(), "Login") == 0) {
 			_loginForm->show();
 		} else {
@@ -746,6 +752,14 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
     //choose project
     else if(strcmp(id, "chooseProject") == 0) {
         _projectMenu->setVisible(true);
+    }
+    //toggle navigation/manipulation mode
+    else if(_touchPanel->getControl(id) == control) {
+        if(strcmp(id, "eye") == 0) {
+            setNavMode(1);
+        } else if(strcmp(id, "hand") == 0) {
+            setNavMode(-1);
+        }
     }
 	//scene operations
 	else if(_sceneMenu->getControl(id) == control) {
@@ -851,7 +865,8 @@ void T4TApp::controlEvent(Control *control, Control::Listener::EventType evt)
 		Project *project = getProject();
 		if(project) {
 			project->_inSequence = false;
-			if(project->_currentElement > 0) project->_currentElement--;
+			if(project->_currentElement > 0 && !project->_choosingOther) project->_currentElement--;
+            project->_choosingOther = false;
 		}
 	}
 	else if(strcmp(id, "debugButton") == 0) {
@@ -915,6 +930,7 @@ void T4TApp::keyEvent(Keyboard::KeyEvent evt, int key) {
 }
 
 void T4TApp::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex) {
+    GP_WARN("TOUCH! %d", (int)evt);
 	_touchPoint.set(evt, x, y);
 	if(evt == Touch::TOUCH_RELEASE) {
 		_touchControl = NULL;

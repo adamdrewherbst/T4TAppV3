@@ -42,6 +42,7 @@ public:
 	void update();
 	void controlEvent(Control *control, Control::Listener::EventType evt);
 	bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
+    void gestureEvent(Gesture::GestureEvent evt, int x, int y, ...);
 	void setRampHeight(float scale);
 };
 

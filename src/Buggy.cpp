@@ -110,6 +110,50 @@ bool Buggy::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contact
 	}
 	return true;
 }
+    
+void Buggy::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...) {
+    va_list arguments;
+    va_start(arguments, y);
+    switch(evt) {
+        case Gesture::GESTURE_TAP:
+            Project::gestureEvent(evt, x, y);
+            break;
+        case Gesture::GESTURE_DRAG:
+            if(_subMode == 1 && !_launching && getTouchNode(Touch::TOUCH_RELEASE) == _ramp) {
+                _touchPt.set(Touch::TOUCH_MOVE, x, y);
+                float scale = _ramp->_baseScale.y - _touchPt.deltaPix().y / 200.0f;
+                GP_WARN("Scaling ramp from %f to %f", _ramp->_baseScale.y, scale);
+                scale = fmin(4.0f, fmax(0.2f, scale));
+                setRampHeight(scale);
+            }
+            else Project::gestureEvent(evt, x, y);
+            break;
+        case Gesture::GESTURE_DROP:
+            if(_subMode == 1 && !_launching) {
+                _ramp->setBase();
+            }
+            Project::gestureEvent(evt, x, y);
+            break;
+        case Gesture::GESTURE_LONG_TAP: {
+            float duration = (float) va_arg(arguments, double);
+            Project::gestureEvent(evt, x, y, duration);
+            break;
+        }
+        case Gesture::GESTURE_PINCH: {
+            float scale = (float) va_arg(arguments, double);
+            int state = (int) va_arg(arguments, long);
+            Project::gestureEvent(evt, x, y, scale, state);
+            break;
+        }
+        case Gesture::GESTURE_ROTATE: {
+            float rotation = (float) va_arg(arguments, double), velocity = (float) va_arg(arguments, double);
+            int state = (int) va_arg(arguments, long);
+            Project::gestureEvent(evt, x, y, rotation, velocity);
+        }
+        default: break;
+    }
+    va_end(arguments);
+}
 
 Buggy::Body::Body(Project *project) : Project::Element(project, NULL, "body", "Body") {
 	_filter = "body";
