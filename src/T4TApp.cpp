@@ -343,11 +343,11 @@ void T4TApp::resizeEvent(unsigned int width, unsigned int height) {
 
 	if(!_mainMenu) return;
 	
-	_componentMenu->setPosition(_sideMenu->getX() + _sideMenu->getWidth() + 25.0f, 25.0f);
+	_componentMenu->setPosition(_sideMenu->getX() + 0.1f * width + 25.0f, 25.0f);
 	_componentMenu->setWidth(width - 2 * _componentMenu->getX());
 	_componentMenu->setHeight(height - 2 * _componentMenu->getY());
 
-    _projectMenu->setPosition(_sideMenu->getX() + _sideMenu->getWidth() + 25.0f, 25.0f);
+    _projectMenu->setPosition(_sideMenu->getX() + 0.1f * width + 25.0f, 25.0f);
     _projectMenu->setWidth(width - 2 * _projectMenu->getX());
     _projectMenu->setHeight(height - 2 * _projectMenu->getY());
 }
@@ -566,12 +566,14 @@ size_t curl_write(void *ptr, size_t size, size_t count, void *data) {
 	return stream->write(ptr, size, count);
 }
 
-char* T4TApp::curlFile(const char *url, const char *filename, const char *localVersion) {
+char* T4TApp::curlFile(const char *url, const char *filename, const char *localVersion, bool returnText) {
 
 	if(!hasInternet()) return NULL;
 
-	bool returnText = filename == NULL;
-	if(returnText) filename = "res/tmp/tmpfile";
+    if(filename == NULL) {
+        filename = "res/tmp/tmpfile";
+        returnText = true;
+    }
 
 	bool useLocal = false;
 	std::string file;
@@ -579,7 +581,7 @@ char* T4TApp::curlFile(const char *url, const char *filename, const char *localV
 		file = "res/";
 		file += url;
 		filename = file.c_str();
-		Stream *stream = FileSystem::open(filename);
+        Stream *stream = FileSystem::open(filename, FileSystem::READ, true);
 		if(stream) {
 			char buf[READ_BUF_SIZE], *arr;
 			arr = stream->readLine(buf, READ_BUF_SIZE);
@@ -1073,7 +1075,7 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	filebase += type;
 	filename = filebase + ".node";
 	if(!FileSystem::fileExists(filename.c_str())) {
-        	bool hasObj = loadObj(type);
+        bool hasObj = loadObj(type);
 #ifdef USE_COLLADA
 		if(!hasObj) loadDAE(type);
 #endif
@@ -1092,14 +1094,13 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	std::string imageFile = "res/png/item_photos/";
 	imageFile += type;
 	imageFile += "_small.png";
-    float imageSize = 400.0f;
 	if(FileSystem::fileExists(imageFile.c_str())) {
-		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, imageSize, imageSize);
+		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 0.32f, 0.32f);
 		itemImage->setImage(imageFile.c_str());
 		itemImage->setZIndex(_componentMenu->getZIndex());
         itemImage->setConsumeInputEvents(true);
 	} else {
-		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, imageSize, imageSize);
+		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 0.32f, 0.32f);
 		itemImage->setText(type);
 		itemImage->setZIndex(_componentMenu->getZIndex());
         itemImage->setConsumeInputEvents(true);

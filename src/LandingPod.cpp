@@ -35,7 +35,7 @@ LandingPod::LandingPod() : Project::Project("landingPod", "Landing Pod") {
 }
 
 void LandingPod::setupMenu() {
-    _hatchButton = app->addControl <Button> (NULL, "openHatch", NULL, -1, 40);
+    _hatchButton = app->addControl <Button> (NULL, "openHatch", NULL, -1, -1);
     _hatchButton->setText("Open Hatch");
     _hatchButton->setEnabled(false);
     _buttons["hatch"] = _hatchButton;

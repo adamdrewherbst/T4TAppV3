@@ -55,23 +55,24 @@ Project::Project(const char* id, const char *name) : Mode::Mode(id, name) {
 		title = "Crew Exp. Veh.";
 	}
 	ImageButton *button = ImageButton::create(_id.c_str(), os.str().c_str(), title);
-    float buttonSize = 400.0f;
-    button->_container->setSize(buttonSize, buttonSize);
+    button->_container->setWidth(0.32f, true);
+    button->_container->setHeight(0.32f, true);
     button->setImageSize(0.7f, 0.7f, true, Control::ALIGN_TOP_HCENTER);
     button->setTextAlignment(Control::ALIGN_BOTTOM_HCENTER);
 	app->_projectContainer->addControl(button->_container);
 
 	//load the project instructions
-	std::string str = "projects/descriptions/" + _id + ".desc";
-	char *text = app->curlFile(str.c_str(), NULL, app->_versions["project_info"].c_str());
+	std::string url = "projects/descriptions/" + _id + ".desc", file = "res/" + url;
+	char *text = app->curlFile(url.c_str(), file.c_str(), app->_versions["project_info"].c_str(), true);
 	if(text) {
 		_description = text;
 		size_t pos = _description.find("\n");
 		if(pos > 0) _description.replace(0, pos+1, "");
 	}
 	std::replace(_description.begin(), _description.end(), '\n', ' ');
-	str = "projects/constraints/" + _id + ".con";
-	text = app->curlFile(str.c_str(), NULL, app->_versions["project_info"].c_str());
+	url = "projects/constraints/" + _id + ".con";
+    file = "res/" + url;
+	text = app->curlFile(url.c_str(), file.c_str(), app->_versions["project_info"].c_str(), true);
 	if(text) {
 		_constraints = text;
 		size_t pos = _constraints.find("\n");
@@ -104,45 +105,45 @@ void Project::setupMenu() {
 	_controls = app->addControl <Container> (_container, "controls", "hiddenContainer", -1, -1);
 	_controls->setLayout(Layout::LAYOUT_FLOW);
 	_controls->setConsumeInputEvents(true);
-    _controls->setAutoSize(Control::AUTO_SIZE_BOTH);
     _controls->setAlignment(Control::ALIGN_HCENTER);
     _controls->setY(0.75f, true);
 	_controls->setZIndex(zIndex);
     
-    int buttonHeight = 100;
-
     //add a launch button
-    _launchButton = app->addControl <Button> (_controls, "launch", NULL, -1, buttonHeight);
+    _launchButton = app->addControl <Button> (_controls, "launch", NULL, -1, -1);
     _launchButton->setText("Launch!");
     _buttons["launch"] = _launchButton;
     
-    Button *button = app->addControl <Button> (_controls, "reset", NULL, -1, buttonHeight);
+    Button *button = app->addControl <Button> (_controls, "reset", NULL, -1, -1);
     button->setText("Reset");
     _buttons["reset"] = button;
     
-	button = app->addControl <Button> (_controls, "build", NULL, -1, buttonHeight);
+	button = app->addControl <Button> (_controls, "build", NULL, -1, -1);
 	button->setText("Build");
     _buttons["build"] = button;
-	button = app->addControl <Button> (_controls, "test", NULL, -1, buttonHeight);
+	button = app->addControl <Button> (_controls, "test", NULL, -1, -1);
 	button->setText("Test It!");
     _buttons["test"] = button;
 
 	//add a button for each element to choose its item and edit it
 	short i, j, n;
 	for(i = 1; i < _numElements; i++) {
-		button = app->addControl <Button> (_controls, _elements[i]->_id.c_str(), NULL, -1, buttonHeight);
+		button = app->addControl <Button> (_controls, _elements[i]->_id.c_str(), NULL, -1, -1);
         button->setText(MyNode::concat(2, i == 0 ? "Choose " : "Add ", _elements[i]->_name.c_str()));
         _buttons[_elements[i]->_id] = button;
 	}
     
-    button = app->addControl <Button> (_controls, "other", NULL, -1, buttonHeight);
+    button = app->addControl <Button> (_controls, "other", NULL, -1, -1);
     button->setText("Add Other Item");
     _buttons["other"] = button;
     
+    button = app->addControl <Button> (_controls, "delete", NULL, -1, -1);
+    button->setText("Delete");
+    _buttons["delete"] = button;
+
     hideButtons();
     for(std::map<std::string, Button*>::iterator it = _buttons.begin(); it != _buttons.end(); it++) {
         button = it->second;
-        button->setAutoSize(Control::AUTO_SIZE_WIDTH);
         button->setAlignment(Control::ALIGN_HCENTER);
         button->setMargin(0, 10.0f, 0, 0);
         button->setZIndex(zIndex);
@@ -223,6 +224,14 @@ void Project::controlEvent(Control *control, Control::Listener::EventType evt) {
 		if(element) element->doAction(id);
 		if(strcmp(id, "delete") == 0) deleteSelected();
     //*/
+    } else if(control == _buttons["delete"]) {
+        Element *el = _selectedNode->getElement();
+        if(el) {
+            MyNode *node = _selectedNode;
+            setSelectedNode(NULL);
+            el->deleteNode(node->getElementIndex());
+            setButtons();
+        }
 	} else if(control == _launchButton) {
 		launch();
     } else if(control == _buttons["reset"]) {
@@ -278,6 +287,7 @@ bool Project::setSelectedNode(MyNode *node, Vector3 point) {
 	if(_selectedNode) highlightNode(_selectedNode, false);
 	bool changed = Mode::setSelectedNode(node, point);
 	if(_subMode == 0 && _selectedNode) highlightNode(_selectedNode, true);
+    if(changed) setButtons();
 	return changed;
 }
 
@@ -380,7 +390,7 @@ void Project::deleteSelected() {
 
 Project::Element* Project::getEl(short n) {
     if(n < 0) n = _choosingOther ? 0 : _currentElement;
-	if(n > _elements.size()) return NULL;
+	if(n >= _numElements) return NULL;
 	return _elements[n].get();
 }
 
@@ -608,6 +618,12 @@ void Project::setButtons() {
                  }
                  }//*/
             }
+            if(_selectedNode) {
+                std::stringstream os;
+                os << "Delete " << _selectedNode->_element->_name;
+                _buttons["delete"]->setText(os.str().c_str());
+            }
+            _buttons["delete"]->setVisible(_selectedNode != NULL);
             break;
         }
         case 1:

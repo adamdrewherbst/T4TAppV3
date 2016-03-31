@@ -1125,6 +1125,13 @@ Project::Element* MyNode::getBaseElement() {
 	}
 	return ret;
 }
+    
+int MyNode::getElementIndex() {
+    if(!_element) return -1;
+    short i, n = _element->getNodeCount();
+    for(i = 0; i < n && _element->getNode(i) != this; i++);
+    return i < n ? i : -1;
+}
 
 void MyNode::addComponentInstance(std::string id, const std::vector<unsigned short> &instance) {
 	_components[id].push_back(instance);
@@ -2741,8 +2748,6 @@ void MyNode::removeMe() {
 		if(child) child->removeMe();
 	}
 	removePhysics();
-	if(_parent) _parent->removeChild(this);
-	else if(_scene) _scene->removeNode(this);
 	if(_element) {
 		short n = _element->_nodes.size(), i;
 		for(i = 0; i < n; i++) {
@@ -2753,6 +2758,8 @@ void MyNode::removeMe() {
 		}
 		if(_element->_nodes.empty()) _element->setComplete(false);
 	}
+    if(_parent) _parent->removeChild(this);
+    else if(_scene) _scene->removeNode(this);
 }
 
 PhysicsConstraint* MyNode::getConstraint(MyNode *other) {

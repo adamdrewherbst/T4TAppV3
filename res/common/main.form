@@ -5,14 +5,13 @@ form mainMenu {
 	width = 100%
 	height = 100%
 	font = res/common/fonts/arial-distance.gpb
-	fontSize = 40
 	layout = LAYOUT_ABSOLUTE
 	consumeInputEvents = false
 
     button parent_menu {
         style = buttonStyle
         position = 0, 0
-        size = 160, 80
+        autoSize = AUTO_SIZE_BOTH
         text = Menu
     }
 
@@ -20,8 +19,7 @@ form mainMenu {
 	container submenu_menu {
 		style = basicContainer
 		position = 0, 50
-		width = 360
-		autoSize = AUTO_SIZE_HEIGHT
+		autoSize = AUTO_SIZE_BOTH
 		//default alignment is top_left which doesn't allow horizontal positioning with autoHeight
 		//alignment = ALIGN_TOP
 		consumeInputEvents = true
@@ -43,8 +41,7 @@ form mainMenu {
 		}*/
         button chooseProject {
             style = buttonStyle
-            autoWidth = true
-            height = 80
+            autoSize = AUTO_SIZE_BOTH
             text = Choose Project
         }
 		/*button saveAll {
@@ -55,8 +52,7 @@ form mainMenu {
 		}*/
 		checkbox drawDebug {	
 			style = CheckBox
-			autoWidth = true
-			height = 80
+            autoSize = AUTO_SIZE_BOTH
 			text = Show Physics
 			checked = false
 		}
@@ -72,8 +68,7 @@ form mainMenu {
 		
 		button exit {
 			style = buttonStyle
-			width = 200
-			height = 100
+            autoSize = AUTO_SIZE_BOTH
 			text = Exit
 		}
 	}
@@ -173,20 +168,20 @@ form mainMenu {
 				
 				image rotate {
 					style = imageSquare
-			        	size = 60, 60
+                    size = 60, 60
 					path = res/png/rotate.png
 					tooltip = Rotate the camera by dragging
 				}
 				image translate {
 					style = imageSquare
-		                        size = 60, 60
+                    size = 60, 60
 					path = res/png/translate.png
 					tooltip = Translate the camera by dragging
 				}
 				image zoom {
 					style = imageSquare
-		                        size = 60, 60
-                		        path = res/png/zoom.png
+                    size = 60, 60
+                    path = res/png/zoom.png
 					tooltip = Zoom in and out by dragging up and down
 				}
 			}
@@ -692,7 +687,6 @@ form mainMenu {
 	container textDialog {
 		style = basicContainer
 		font = res/common/fonts/arial-distance.gpb
-		fontSize = 40
 		layout = LAYOUT_FLOW
 		alignment = ALIGN_VCENTER_HCENTER
 		size = 350, 150
@@ -723,7 +717,6 @@ form mainMenu {
 	container confirmDialog {
 		style = basicContainer
 		font = res/common/fonts/arial-distance.gpb
-		fontSize = 40
 		layout = LAYOUT_FLOW
 		alignment = ALIGN_VCENTER_HCENTER
 		size = 350, 150
@@ -764,9 +757,8 @@ form projectMenu {
 
         label title {
             style = noBorder
-            autoSize = AUTO_SIZE_WIDTH
-            height = 120
-            fontSize = 50
+            autoSize = AUTO_SIZE_BOTH
+            fontSize = ${titleSize1}
             alignment = ALIGN_HCENTER
         }
     }
@@ -775,7 +767,7 @@ form projectMenu {
         style = hiddenContainer
         layout = LAYOUT_FLOW
         width = 100%
-        autoSize = AUTO_SIZE_HEIGHT
+        height = 90%
         alignment = ALIGN_TOP
         consumeInputEvents = true
 
@@ -805,16 +797,13 @@ form componentMenu {
 		
 		button back {
 			style = buttonStyle
-			autoSize = AUTO_SIZE_WIDTH
-			height = 50
+			autoSize = AUTO_SIZE_BOTH
 			alignment = ALIGN_LEFT
 			text = Back to Instructions
 		}
 		label title {
 			style = noBorder
-			autoSize = AUTO_SIZE_WIDTH
-			height = 120
-			fontSize = 50
+			autoSize = AUTO_SIZE_BOTH
 			alignment = ALIGN_HCENTER
 		}
 	}
@@ -826,7 +815,7 @@ form componentMenu {
         consumeInputEvents = true
 
 		container instructions {
-			style = basicContainer
+			style = hiddenContainer
 			layout = LAYOUT_ABSOLUTE
 			size = 100%, 100%
             consumeInputEvents = true
@@ -840,15 +829,13 @@ form componentMenu {
 
 				button prev {
 					style = buttonStyle
-					autoSize = AUTO_SIZE_WIDTH
-					height = 100
+					autoSize = AUTO_SIZE_BOTH
 					text = Previous
 					alignment = ALIGN_LEFT
 				}
 				button next {
 					style = buttonStyle
-					autoSize = AUTO_SIZE_WIDTH
-					height = 100
+					autoSize = AUTO_SIZE_BOTH
 					text = Next
 					alignment = ALIGN_RIGHT
 				}
@@ -864,15 +851,13 @@ form componentMenu {
 					style = noBorder
 					width = 100%
 					height = 100%
-					fontSize = 50
 				}
 			}
 		}
 		container components {
 			style = hiddenContainer
 			layout = LAYOUT_FLOW
-			width = 100%
-			autoSize = AUTO_SIZE_HEIGHT
+			size = 100%, 100%
 			alignment = ALIGN_TOP
             consumeInputEvents = true
 		}
@@ -887,8 +872,7 @@ form componentMenu {
 		
 		button componentCancel {
 			style = buttonStyle
-			autoSize = AUTO_SIZE_WIDTH
-			height = 100
+			autoSize = AUTO_SIZE_BOTH
 			text = Cancel
 		}
 	}

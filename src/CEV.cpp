@@ -20,7 +20,7 @@ CEV::CEV() : Project::Project("CEV", "Crew Exploration Vehicle") {
 
 void CEV::setupMenu() {
 	Project::setupMenu();
-	_hatchButton = app->addControl <Button> (NULL, "openHatch", NULL, -1, 40);
+	_hatchButton = app->addControl <Button> (NULL, "openHatch", NULL, -1, -1);
 	_hatchButton->setText("Open Hatch");
 	_controls->insertControl(_hatchButton, 2);
 	_hatchButton->setEnabled(false);

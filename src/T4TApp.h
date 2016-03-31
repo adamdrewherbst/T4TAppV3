@@ -283,7 +283,7 @@ public:
     void processLogin(AppForm *form);
     void processRegistration(AppForm *form);
     void loadProjects(bool saveOnly = false);
-    char* curlFile(const char *url, const char *filename = NULL, const char *localVersion = NULL);
+    char* curlFile(const char *url, const char *filename = NULL, const char *localVersion = NULL, bool returnText = false);
 	void generateModels();
 	MyNode* generateModel(const char *id, const char *type, ...);
 	void loadModels(); //const char *filename);
@@ -420,10 +420,14 @@ public:
 	  const char *style = NULL, float width = -1, float height = -1)
 	{
 		ControlType* control = ControlType::create(id, style == NULL ? _buttonStyle : _theme->getStyle(style));
-		if(width > 0) control->setWidth(width);
-		else control->setWidth(1, true);
-		if(height > 0) control->setHeight(height);
-		else control->setAutoSize(Control::AUTO_SIZE_HEIGHT);
+        bool autoWidth = width < 0, autoHeight = height < 0;
+		if(!autoWidth) control->setWidth(width, width <= 1);
+		if(!autoHeight) control->setHeight(height, height <= 1);
+        if(autoWidth || autoHeight) {
+            if(autoWidth && autoHeight) control->setAutoSize(Control::AUTO_SIZE_BOTH);
+            else if(autoWidth) control->setAutoSize(Control::AUTO_SIZE_WIDTH);
+            else control->setAutoSize(Control::AUTO_SIZE_HEIGHT);
+        }
 		control->setConsumeInputEvents(true);
 		if(parent) parent->addControl(control);
 		return control;

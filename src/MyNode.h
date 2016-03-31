@@ -101,6 +101,7 @@ public:
 	Model* getModel();
 	Project::Element* getElement();
 	Project::Element* getBaseElement();
+    int getElementIndex();
 
 	//transform
 	Matrix getRotTrans();
