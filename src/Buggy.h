@@ -28,6 +28,7 @@ public:
 		bool touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex);
 		void placeNode(short n);
 		void addPhysics(short n);
+        void deleteNode(short n);
 	};
 	
 	Element *_body, *_frontAxle, *_rearAxle, *_frontWheels, *_rearWheels;

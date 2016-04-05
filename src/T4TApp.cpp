@@ -410,7 +410,7 @@ void T4TApp::setTooltip() {
 	}
 	std::ostringstream os;
 	os << "showing tooltip for " << _tooltipControl->getId() << " at " << x << "," << y << ": " << tooltip;
-	//message(os.str().c_str());
+	message(os.str().c_str());
 }
 
 void T4TApp::render(float elapsedTime)
@@ -671,6 +671,9 @@ void T4TApp::gestureTapEvent(int x, int y)
     
 void T4TApp::gestureLongTapEvent(int x, int y, float duration)
 {
+    if(_touchControl && duration > 1000.0f) {
+        setTooltip();
+    }
     if(_activeMode) getActiveMode()->gestureEvent(Gesture::GESTURE_LONG_TAP, x, y, duration);
 }
     
@@ -1094,13 +1097,15 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	std::string imageFile = "res/png/item_photos/";
 	imageFile += type;
 	imageFile += "_small.png";
+    float containerWidth = _componentContainer->getWidth(), imageSize =  450.0f;
+    GP_WARN("container is %f => image is %f", containerWidth, imageSize);
 	if(FileSystem::fileExists(imageFile.c_str())) {
-		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 0.32f, 0.32f);
+		ImageControl* itemImage = addControl <ImageControl> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, imageSize, imageSize);
 		itemImage->setImage(imageFile.c_str());
 		itemImage->setZIndex(_componentMenu->getZIndex());
         itemImage->setConsumeInputEvents(true);
 	} else {
-		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, 0.32f, 0.32f);
+		Button *itemImage = addControl <Button> (_componentContainer, MyNode::concat(2, "comp_", type), NULL, imageSize, imageSize);
 		itemImage->setText(type);
 		itemImage->setZIndex(_componentMenu->getZIndex());
         itemImage->setConsumeInputEvents(true);

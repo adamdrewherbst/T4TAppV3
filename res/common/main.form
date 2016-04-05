@@ -106,17 +106,17 @@ form mainMenu {
 		
 		label messageBottom {
 			style = buttonStyle
-			size = 90%, 8%
-			alignment = ALIGN_BOTTOM_LEFT
+			autoSize = AUTO_SIZE_BOTH
+			alignment = ALIGN_BOTTOM_HCENTER
 		}
 		label messageTop {
 			style = buttonStyle
-			size = 60%, 8%
+			autoSize = AUTO_SIZE_BOTH
 			alignment = ALIGN_TOP_HCENTER
 		}
 		label messageCenter {
 			style = buttonStyle
-			size = 60%, 8%
+			autoSize = AUTO_SIZE_BOTH
 			alignment = ALIGN_VCENTER_HCENTER
 		}
 
@@ -771,12 +771,12 @@ form projectMenu {
         alignment = ALIGN_TOP
         consumeInputEvents = true
 
-        button hull {
+        /*button hull {
             style = buttonStyle
             autoWidth = true
             height = 40
             text = Hull
-        }
+        }*/
     }
 }
 
@@ -857,7 +857,8 @@ form componentMenu {
 		container components {
 			style = hiddenContainer
 			layout = LAYOUT_FLOW
-			size = 100%, 100%
+			width = 100%
+            autoSize = AUTO_SIZE_HEIGHT
 			alignment = ALIGN_TOP
             consumeInputEvents = true
 		}

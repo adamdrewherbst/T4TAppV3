@@ -12,9 +12,9 @@ theme mainMenu
     ${focusColor} = ${normalColor}
     ${textColor} = #ffffffff
     ${font} = fonts/arial-distance.gpb
-    ${fontSize} = 24
-    ${titleSize1} = 28
-    ${titleSize2} = 32
+    ${fontSize} = 50
+    ${titleSize1} = 56
+    ${titleSize2} = 62
     ${disabledOpacity} = 0.5
 
     /////////////////////////////////////////////////////////////////////

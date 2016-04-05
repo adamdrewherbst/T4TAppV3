@@ -238,11 +238,18 @@ void Buggy::Wheels::placeNode(short n) {
 }
 
 void Buggy::Wheels::addPhysics(short n) {
-	Element::addPhysics(n);
+    Project::Element::addPhysics(n);
 	MyNode *node = getNode(n);
 	app->addConstraint(_parent->getNode(), node, node->_constraintId, "hinge",
 		node->getTranslationWorld(), Vector3::unitX(), true, true);
 	node->_parentNormal = Vector3::unitX();
+}
+    
+void Buggy::Wheels::deleteNode(short n)
+{
+    //we always delete both wheels together => ignore any specified index
+    Project::Element::deleteNode(1);
+    Project::Element::deleteNode(0);
 }
 
 bool Buggy::Wheels::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactIndex) {
