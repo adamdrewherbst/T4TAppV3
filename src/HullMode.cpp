@@ -49,6 +49,7 @@ void HullMode::setActive(bool active) {
 		app->_ground->setVisible(true);
 		app->getPhysicsController()->setGravity(app->_gravity);
 	}
+    app->_drawDebug = active;
 }
 
 bool HullMode::setSubMode(short mode) {
@@ -391,7 +392,7 @@ bool HullMode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int cont
 		if(evt == Touch::TOUCH_PRESS && !_ctrlPressed && !_shiftPressed) {
 			_currentSelection->clear();
 		} else {
-			short face = _hullNode->pix2Face(_x, _y);
+			short face = _hullNode->pix2Face(x, y);
 			if(face >= 0) {
 				//cout << "selected face " << face << ":" << endl;
 				//_hullNode->printFace(face, false);
@@ -426,6 +427,47 @@ bool HullMode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int cont
 		}
 	}
 	return true;
+}
+    
+void HullMode::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...) {
+    if(app->hasOverlay()) return;
+    va_list arguments;
+    va_start(arguments, y);
+    switch(evt) {
+        case Gesture::GESTURE_TAP:
+            Mode::gestureEvent(evt, x, y);
+            break;
+        case Gesture::GESTURE_DRAG:
+            _touchPt._touching = true;
+            touchEvent(Touch::TOUCH_MOVE, x, y, 0);
+            Mode::gestureEvent(evt, x, y);
+            break;
+        case Gesture::GESTURE_DROP:
+            touchEvent(Touch::TOUCH_RELEASE, x, y, 0);
+            Mode::gestureEvent(evt, x, y);
+            _hullNode->updateCamera(false);
+            break;
+        case Gesture::GESTURE_LONG_TAP: {
+            float duration = (float) va_arg(arguments, double);
+            Mode::gestureEvent(evt, x, y, duration);
+            break;
+        }
+        case Gesture::GESTURE_PINCH: {
+            float scale = (float) va_arg(arguments, double);
+            int state = (int) va_arg(arguments, long);
+            Mode::gestureEvent(evt, x, y, scale, state);
+            _hullNode->updateCamera(false);
+            break;
+        }
+        case Gesture::GESTURE_ROTATE: {
+            float rotation = (float) va_arg(arguments, double), velocity = (float) va_arg(arguments, double);
+            int state = (int) va_arg(arguments, long);
+            Mode::gestureEvent(evt, x, y, rotation, velocity);
+            _hullNode->updateCamera(false);
+        }
+        default: break;
+    }
+    va_end(arguments);
 }
 
 void HullMode::placeCamera() {

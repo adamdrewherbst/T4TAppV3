@@ -359,6 +359,13 @@ theme mainMenu
         }
     }
 
+    style buttonStyleSmall : buttonStyle {
+        stateNormal
+        {
+            fontSize = 16
+        }
+    }
+
     style buttonActive {
     	stateNormal {
     		skin = ButtonSkinActive

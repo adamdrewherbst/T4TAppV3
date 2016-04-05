@@ -182,6 +182,10 @@ void Face::triangulate() {
 		gluTessEndContour(_tess);
 	}
 	gluTessEndPolygon(_tess);
+#else
+    if(_border.size() == 3) {
+        _triangles.push_back(_border);
+    }
 #endif
 }
 
@@ -1631,7 +1635,7 @@ void MyNode::uploadData(const char *url, const char *rootId) {
 	//cout << "opening file " << filename << endl;
 	if(rootId == NULL) writeData("res/tmp/", true);
 	std::string id = rootId == NULL ? _id.c_str() : rootId;
-	FILE *fd = FileSystem::openFile(filename.c_str(), "rb");
+    FILE *fd = FileSystem::openFile(filename.c_str(), "rb", true);
 	fseek(fd, 0, SEEK_END);
 	long length = ftell(fd);
 	fseek(fd, 0, SEEK_SET);

@@ -227,38 +227,38 @@ form mainMenu {
 					layout = LAYOUT_VERTICAL
 					
 					button selectRegion {
-						style = buttonStyle
+						style = buttonStyleSmall
 						autoWidth = true
 						height = 40
 						text = Select Region
 					}
 					button selectRing {
-						style = buttonStyle
+						style = buttonStyleSmall
 						autoWidth = true
 						height = 40
 						text = Select Ring
 					}
 					button selectChain {
-						style = buttonStyle
+						style = buttonStyleSmall
 						autoWidth = true
 						height = 40
 						text = Select Chain
 					}
 					button selectRectangle {
-						style = buttonStyle
+						style = buttonStyleSmall
 						autoWidth = true
 						height = 40
 						text = Select Rectangle
 					}
 				}
 				button oneHull {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = One Hull
 				}
 				button boxOnly {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Box Only
@@ -270,23 +270,23 @@ form mainMenu {
 					layout = LAYOUT_FLOW
 					
 					button X {
-						style = buttonStyle
+						style = buttonStyleSmall
 						size = 40,40
 						text = X
 					}
 					button Y {
-						style = buttonStyle
+						style = buttonStyleSmall
 						size = 40,40
 						text = Y
 					}
 					button Z {
-						style = buttonStyle
+						style = buttonStyleSmall
 						size = 40,40
 						text = Z
 					}
 				}
 				slider scale {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 50
 					text = Scale
@@ -301,43 +301,43 @@ form mainMenu {
 					height = 50
 				}
 				button center {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Center
 				}
 				button flipAxis {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Flip
 				}
 				button selectAll {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Select All
 				}
 				button reverseFace {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Reverse Faces
 				}
 				button makeHull {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Make Hulls
 				}
 				button clearHulls {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Clear Hulls
 				}
 				button save {
-					style = buttonStyle
+					style = buttonStyleSmall
 					autoWidth = true
 					height = 40
 					text = Save
@@ -771,12 +771,12 @@ form projectMenu {
         alignment = ALIGN_TOP
         consumeInputEvents = true
 
-        /*button hull {
+        button hull {
             style = buttonStyle
             autoWidth = true
             height = 40
             text = Hull
-        }*/
+        }
     }
 }
 

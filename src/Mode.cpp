@@ -154,7 +154,7 @@ bool Mode::touchEvent(Touch::TouchEvent evt, int x, int y, unsigned int contactI
     
 void Mode::gestureEvent(Gesture::GestureEvent evt, int x, int y, ...)
 {
-    if(app->_componentMenu->isVisible() || app->_projectMenu->isVisible()) return;
+    if(app->hasOverlay()) return;
     va_list arguments;
     va_start(arguments, y);
     switch(evt) {

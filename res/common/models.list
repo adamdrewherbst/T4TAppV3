@@ -2,7 +2,7 @@
 #sphere	2	general	body
 #cylinder	2	general	body
 #halfpipe	2	general	body
-stripey_tube	2	general	body
+footlong_tube	2	general	body
 #gear_basic	2	general	gear
 #cap_with_hole_1	1	general
 pitri_wheel	1	general

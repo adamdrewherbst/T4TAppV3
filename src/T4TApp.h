@@ -442,6 +442,7 @@ public:
     void confirmDelete(bool yes);
     void message(const char *text, int locations = MESSAGE_BOTTOM);
     bool hasMessage(int locations = MESSAGE_BOTTOM);
+    bool hasOverlay();
     
     //miscellaneous
     template <class T> T* popBack(std::vector<T*> &vec);

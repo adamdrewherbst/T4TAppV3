@@ -180,7 +180,7 @@ public:
      * @see setResourcePath(const char*)
      * @script{ignore}
      */
-    static FILE* openFile(const char* filePath, const char* mode);
+    static FILE* openFile(const char* filePath, const char* mode, bool external = false);
 
     /**
      * Reads the entire contents of the specified file and returns its contents.

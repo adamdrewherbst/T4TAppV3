@@ -1074,7 +1074,7 @@ void T4TApp::addItem(const char *type, std::vector<std::string> tags) {
 	std::string filebase = "res/models/", filename;
 	filebase += type;
 	filename = filebase + ".node";
-	if(!FileSystem::fileExists(filename.c_str())) {
+	if(!FileSystem::fileExists(filename.c_str(), true)) {
         bool hasObj = loadObj(type);
 #ifdef USE_COLLADA
 		if(!hasObj) loadDAE(type);
@@ -1403,6 +1403,10 @@ bool T4TApp::hasMessage(int locations) {
 	if(locations & MESSAGE_TOP && _messages[MESSAGE_TOP]->isVisible()) return true;
 	if(locations & MESSAGE_CENTER && _messages[MESSAGE_CENTER]->isVisible()) return true;
 	return false;
+}
+    
+bool T4TApp::hasOverlay() {
+    return _componentMenu->isVisible() || _projectMenu->isVisible();
 }
 
 bool T4TApp::prepareNode(MyNode* node)

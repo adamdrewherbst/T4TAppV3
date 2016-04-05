@@ -438,13 +438,13 @@ Stream* FileSystem::open(const char* path, size_t streamMode, bool external)
 #endif
 }
 
-FILE* FileSystem::openFile(const char* filePath, const char* mode)
+FILE* FileSystem::openFile(const char* filePath, const char* mode, bool external)
 {
     GP_ASSERT(filePath);
     GP_ASSERT(mode);
 
     std::string fullPath;
-    getFullPath(filePath, fullPath);
+    getFullPath(filePath, fullPath, external);
 
     createFileFromAsset(filePath);
     

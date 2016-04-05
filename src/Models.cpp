@@ -469,6 +469,7 @@ void Meshy::loadObj(const char *filename, Vector3 *shift) {
 				face.push_back(ind-1 - vOffset);
 				in >> token;
 			}
+            GP_WARN("OBJ face %d: %d %d %d", face.size(), face[0], face[1], face[2]);
 			addFace(face, reverseFace);
 		}
 		if((/*strcmp(label, "g") == 0 ||*/ stream->eof()) && nv() > 0) { //end of current model
