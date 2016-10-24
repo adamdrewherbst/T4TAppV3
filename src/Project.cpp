@@ -88,6 +88,7 @@ Project::Project(const char* id, const char *name) : Mode::Mode(id, name) {
 			pos++;
 		}
 	}
+    //*/
 }
 
 void Project::setupMenu() {

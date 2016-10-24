@@ -15,7 +15,6 @@
 #include "CEV.h"
 #include "Launcher.h"
 #include "HullMode.h"
-#include "Grid.h"
 
 namespace T4T {
 
@@ -63,9 +62,6 @@ void T4TApp::initialize()
 
 	splash("Initializing...");
     
-    setMultiTouch(true);
-    //registerGesture(Gesture::GESTURE_ANY_SUPPORTED);
-
 #ifdef USE_GLU_TESS
 	Face::initTess();
 #endif
@@ -226,8 +222,6 @@ void T4TApp::initialize()
 	loadModels();
 
 	_drawDebugCheckbox = (CheckBox*) _sideMenu->getControl("drawDebug");
-	//_drawDebugCheckbox = addControl <CheckBox> (_sideMenu, "drawDebug");
-	//Button *debugButton = addControl <Button> (_sideMenu, "debugButton");
 	
     //addListener(_textName, this, Control::Listener::TEXT_CHANGED);
     
@@ -235,8 +229,6 @@ void T4TApp::initialize()
 	
 	//interactive modes
 	_modes.push_back(new NavigateMode());
-	//_modes.push_back(new PositionMode());
-	//_modes.push_back(new ConstraintMode());
 	_modes.push_back(new Satellite());
 	_modes.push_back(new Rocket());
 	_modes.push_back(new Buggy());
@@ -245,15 +237,7 @@ void T4TApp::initialize()
 	_modes.push_back(new CEV());
 	_modes.push_back(new Launcher());
 	_modes.push_back(new HullMode());
-	//_modes.push_back(new StringMode());
-	//_modes.push_back(new ToolMode());
-	//_modes.push_back(new TestMode());
-	//_modes.push_back(new TouchMode());
 
-	//simple machines
-    //_modes.push_back(new Lever());
-    //_modes.push_back(new Pulley());
-    
     splash("Finalizing...");
     
     _itemFilter = new MenuFilter(_componentContainer);
@@ -291,7 +275,7 @@ void T4TApp::initialize()
 	_cameraShift = NULL;
 
 	_drawDebug = false;	
-    _sideMenu->setFocus();
+    //_sideMenu->setFocus();
     
 	_running = 0;
 	_constraintCount = 0;

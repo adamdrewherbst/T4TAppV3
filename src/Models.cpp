@@ -129,6 +129,7 @@ void T4TApp::loadModels() {
 		}
 		addItem(modelName.c_str(), tags);
 	}
+	splash("Done loading models");
 }
 
 /*void T4TApp::loadModels(const char *filename) {

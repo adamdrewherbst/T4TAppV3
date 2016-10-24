@@ -1,10 +1,11 @@
 #ifndef TEMPLATEGAME_H_
 #define TEMPLATEGAME_H_
 
-#if defined __linux__ && !defined __ANDROID__
+/*#if defined __linux__ && !defined __ANDROID__
 	#define USE_GLU_TESS
 	#define USE_COLLADA
 #endif
+//*/
 
 #define READ_BUF_SIZE 8192
 
@@ -21,9 +22,6 @@
 #include <memory>
 #ifdef USE_COLLADA
 	#include "pugixml.hpp"
-	//#include <assimp/assimp.hpp>
-	//#include <assimp/aiScene.h>
-	//#include <assimp/aiPostProcess.h>
 #endif
 #include "gameplay.h"
 
